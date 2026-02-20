@@ -20,8 +20,8 @@ const hallway = createHallway(scene);
 const input = new Input();
 
 // Gravity
-const GRAVITY = 30.0;
-const JUMP_VEL = 12.0;
+const GRAVITY = 25.0;
+const JUMP_VEL = 14.0;
 const GROUND_Y = 1.0;
 
 let velY = 0.0;
