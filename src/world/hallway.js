@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 const SEGMENT_LENGTH = 40;
 const SEGMENT_COUNT = 5;
-const HALLWAY_WIDTH = 10;
+const HALLWAY_WIDTH = 15;
 const HALLWAY_SPEED = 15.0;
 
 class HallwayManager {
@@ -36,7 +36,7 @@ class HallwayManager {
     const first = this.segments[0];
 
     // recycle the hallway segment when the segment’s center passes +L/2
-    if (first.position.z > SEGMENT_LENGTH / 2) {
+    if (first.position.z > SEGMENT_LENGTH) {
       const recycled = this.segments.shift();
       const lastZ = this.segments[this.segments.length - 1].position.z;
       recycled.position.z = lastZ - SEGMENT_LENGTH;
@@ -51,21 +51,25 @@ class HallwayManager {
     // floor
     const floor = new THREE.Mesh(this.floorGeo, this.floorMat);
     floor.rotation.x = -Math.PI / 2;
+    floor.frustumCulled = false; 
     group.add(floor);
 
     // walls
     const leftWall = new THREE.Mesh(this.wallGeo, this.wallMat);
     leftWall.position.set(-HALLWAY_WIDTH / 2, 5, 0);
+    leftWall.frustumCulled = false;
     group.add(leftWall);
 
     const rightWall = new THREE.Mesh(this.wallGeo, this.wallMat);
     rightWall.position.set(HALLWAY_WIDTH / 2, 5, 0);
+    rightWall.frustumCulled = false; 
     group.add(rightWall);
 
     // beams
     for (let i = 0; i < 4; i++) {
       const beam = new THREE.Mesh(this.beamGeo, this.beamMat);
       beam.position.set(0, 9, (i * 10) - 15);
+      beam.frustumCulled = false; 
       group.add(beam);
     }
 
