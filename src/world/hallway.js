@@ -1,10 +1,11 @@
 import * as THREE from "three";
 
-const SEGMENT_LENGTH = 40;
-const SEGMENT_COUNT = 5;
-const HALLWAY_WIDTH = 14;
+const SEGMENT_LENGTH = 40; // length of hallway segment
+const SEGMENT_COUNT = 5; // number of segments generated at a time
+const HALLWAY_WIDTH = 14; 
 const HALLWAY_SPEED = 15.0;
 
+// boelter hall colors
 const COLORS = {
   floorBase: 0xeeeeee,
   floorGrey: 0x666666,
@@ -19,11 +20,11 @@ const COLORS = {
 class HallwayManager {
   constructor(scene) {
     this.scene = scene;
-    this.segments = [];
+    this.segments = []; // stores the 5 hallway segments
     this.speed = HALLWAY_SPEED;
 
     // geometries
-    this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH);
+    this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH); 
     this.wallMat = new THREE.MeshPhongMaterial({ color: COLORS.wall });
 
     this.doorGeo = new THREE.BoxGeometry(0.5, 7, 4);
@@ -37,23 +38,27 @@ class HallwayManager {
     this.matBeamRed = new THREE.MeshPhongMaterial({ color: COLORS.beamRed });
     this.matBeamDark = new THREE.MeshPhongMaterial({ color: COLORS.beamDark });
 
+    // paint the Boelter Hall text onto a texture  
     const textTexture = this.createSignTexture("Boelter Hall");
     this.matSignFace = new THREE.MeshBasicMaterial({ map: textTexture });
 
-    // floor materials
+    // calculate tilze size dynamically
     const tileSize = HALLWAY_WIDTH / 10;
     this.tileSize = tileSize;
     this.tileGeo = new THREE.PlaneGeometry(tileSize, tileSize);
+
+    // floor materials for the white, grey, pink tiles
     this.matBase = new THREE.MeshPhongMaterial({ color: COLORS.floorBase, side: THREE.DoubleSide });
     this.matGrey = new THREE.MeshPhongMaterial({ color: COLORS.floorGrey, side: THREE.DoubleSide });
     this.matPink = new THREE.MeshPhongMaterial({ color: COLORS.floorPink, side: THREE.DoubleSide });
 
+    // for tiley look, create a grid material and edge geometry for outlines 
     this.gridMat = new THREE.LineBasicMaterial({ 
       color: 0x555555, opacity: 0.15, transparent: true 
     });
     this.tileOutlineGeo = new THREE.EdgesGeometry(this.tileGeo);
 
-    // initlialize segments
+    // initlialize the first 5 segments and place them consecutively
     for (let i = 0; i < SEGMENT_COUNT; i++) {
       const zPos = -i * SEGMENT_LENGTH;
       const segment = this.createSegment(zPos, i);
@@ -62,6 +67,7 @@ class HallwayManager {
     }
   }
 
+  // create canvas texture for the text "sign" on the beam
   createSignTexture(text) {
     const canvas = document.createElement('canvas');
 
@@ -86,10 +92,12 @@ class HallwayManager {
   }
 
   update(dt) {
+    // move all segments forward
     for (const segment of this.segments) {
       segment.position.z += this.speed * dt;
     }
 
+    // if the whole first segment has moved past the camera, recycle it to the back of the hallway
     const first = this.segments[0];
     if (first.position.z > SEGMENT_LENGTH) {
       const recycled = this.segments.shift();
@@ -103,12 +111,13 @@ class HallwayManager {
     const group = new THREE.Group();
     group.position.z = zStart;
 
-    // floor
+    // calculate how many rows fit in the 40 units
     const cols = 10;
     const rows = Math.ceil(SEGMENT_LENGTH / this.tileSize);
     const tileGroup = new THREE.Group();
     tileGroup.rotation.x = -Math.PI / 2;
 
+    // place tiles in grid, logic for calculating color pattern
     for (let x = 0; x < cols; x++) {
       for (let z = 0; z < rows; z++) {
         let mat = this.matBase;
@@ -127,6 +136,7 @@ class HallwayManager {
         tile.frustumCulled = false;
         tileGroup.add(tile);
         
+        // add wireframe grid
         const outline = new THREE.LineSegments(this.tileOutlineGeo, this.gridMat);
         outline.position.set(xPos, zPos, 0.005);
         outline.frustumCulled = false;
@@ -135,7 +145,7 @@ class HallwayManager {
     }
     group.add(tileGroup);
 
-    // walls
+    // place walls
     const leftWall = new THREE.Mesh(this.wallGeo, this.wallMat);
     leftWall.position.set(-HALLWAY_WIDTH / 2 - 0.5, 5, 0);
     leftWall.frustumCulled = false;
@@ -162,6 +172,7 @@ class HallwayManager {
     const zBeam = 18; 
 
     // main beam
+    // the first segment will have the boelter sign beam, the rest are red 
     const beamMat = isSignBeam ? this.matBeamDark : this.matBeamRed;
     const beamMesh = new THREE.Mesh(this.beamGeo, beamMat);
     beamMesh.position.set(0, 9.25, zBeam);
