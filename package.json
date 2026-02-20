@@ -1,0 +1,16 @@
+{
+  "name": "bruin-escape",
+  "version": "1.0.0",
+  "description": "3D platformer in Boelter Hall - CS 174A",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "three": "^0.168.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.2"
+  }
+}

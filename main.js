@@ -1,0 +1,49 @@
+import * as THREE from 'three';
+import { scene, renderer } from './src/core/scene.js';
+import { camera } from './src/core/camera.js';
+import { createHallway, updateHallway } from './src/world/hallway.js';
+import { HALLWAY_BOUNDS } from './src/world/bounds.js';
+
+// Placeholder cube, this is where we add joe.js
+const playerGeo = new THREE.BoxGeometry(1, 2, 1);
+const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf });
+const player = new THREE.Mesh(playerGeo, playerMat);
+player.position.set(0, 1, 0);
+player.castShadow = true;
+scene.add(player);
+
+// Hallway
+const hallway = createHallway(scene);
+
+// Placeholder input, add input.js here
+const keys = {};
+window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+// Player movement constants
+const MOVE_SPEED = 8.0;
+
+// Game loop
+const clock = new THREE.Clock();
+
+function animate() {
+	const dt = clock.getDelta();
+
+	// Player lateral movement
+	if (keys['a'] || keys['A'] || keys['ArrowLeft']) {
+		player.position.x -= MOVE_SPEED * dt;
+	}
+	if (keys['d'] || keys['D'] || keys['ArrowRight']) {
+		player.position.x += MOVE_SPEED * dt;
+	}
+
+	// Keep the player within hallway bounds
+	player.position.x = Math.max(HALLWAY_BOUNDS.minX, Math.min(HALLWAY_BOUNDS.maxX, player.position.x));
+
+	// Scroll hallway
+	updateHallway(hallway, dt);
+
+	renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animate);
