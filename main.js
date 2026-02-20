@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { scene, renderer } from './src/core/scene.js';
 import { camera } from './src/core/camera.js';
+import { Input } from './src/player/input.js';
 import { createHallway, updateHallway } from './src/world/hallway.js';
 import { HALLWAY_BOUNDS } from './src/world/bounds.js';
 
@@ -16,9 +17,7 @@ scene.add(player);
 const hallway = createHallway(scene);
 
 // Placeholder input, add input.js here
-const keys = {};
-window.addEventListener('keydown', (e) => { keys[e.key] = true; });
-window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+const input = new Input();
 
 // Player movement constants
 const MOVE_SPEED = 8.0;
@@ -29,13 +28,9 @@ const clock = new THREE.Clock();
 function animate() {
 	const dt = clock.getDelta();
 
-	// Player lateral movement
-	if (keys['a'] || keys['A'] || keys['ArrowLeft']) {
-		player.position.x -= MOVE_SPEED * dt;
-	}
-	if (keys['d'] || keys['D'] || keys['ArrowRight']) {
-		player.position.x += MOVE_SPEED * dt;
-	}
+	// left right input from input.js
+	if (input.left())  player.position.x -= MOVE_SPEED * dt;
+	if (input.right()) player.position.x += MOVE_SPEED * dt;
 
 	// Keep the player within hallway bounds
 	player.position.x = Math.max(HALLWAY_BOUNDS.minX, Math.min(HALLWAY_BOUNDS.maxX, player.position.x));
