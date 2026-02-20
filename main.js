@@ -19,6 +19,13 @@ const hallway = createHallway(scene);
 // Placeholder input, add input.js here
 const input = new Input();
 
+// Gravity
+const GRAVITY = 30.0;
+const JUMP_VEL = 12.0;
+const GROUND_Y = 1.0;
+
+let velY = 0.0;
+
 // Player movement constants
 const MOVE_SPEED = 8.0;
 
@@ -28,6 +35,20 @@ const clock = new THREE.Clock();
 function animate() {
 	const dt = clock.getDelta();
 
+	//Jump
+	if(input.jump() && player.position.y <= GROUND_Y + 1e-4) {
+		velY = JUMP_VEL;
+	}
+
+    //Gravity
+	velY -= GRAVITY * dt;
+	player.position.y += velY * dt;
+
+	// Ground collision
+	if (player.position.y < GROUND_Y) {
+		player.position.y = GROUND_Y;
+		velY = 0.0;
+	}
 	// left right input from input.js
 	if (input.left())  player.position.x -= MOVE_SPEED * dt;
 	if (input.right()) player.position.x += MOVE_SPEED * dt;
@@ -37,7 +58,7 @@ function animate() {
 
 	// Scroll hallway
 	updateHallway(hallway, dt);
-
+	input.endFrame();
 	renderer.render(scene, camera);
 }
 
