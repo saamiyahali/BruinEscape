@@ -12,13 +12,13 @@ class HallwayManager {
     this.speed = HALLWAY_SPEED;
 
     this.floorGeo = new THREE.PlaneGeometry(HALLWAY_WIDTH, SEGMENT_LENGTH);
-    this.floorMat = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
+    this.floorMat = new THREE.MeshPhongMaterial({ color: 0x736360, side: THREE.DoubleSide });
 
     this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH);
-    this.wallMat = new THREE.MeshPhongMaterial({ color: 0xeecfa1 });
+    this.wallMat = new THREE.MeshPhongMaterial({ color: 0xb8b5a9 });
 
     this.beamGeo = new THREE.BoxGeometry(HALLWAY_WIDTH, 1, 1);
-    this.beamMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+    this.beamMat = new THREE.MeshPhongMaterial({ color: 0x8f8d83 });
 
     for (let i = 0; i < SEGMENT_COUNT; i++) {
       const zPos = -i * SEGMENT_LENGTH;
@@ -35,7 +35,7 @@ class HallwayManager {
 
     const first = this.segments[0];
 
-    // recycle the hallway segment when the segment’s center passes +L/2
+    // recycle the hallway segment when the segment’s center passes L
     if (first.position.z > SEGMENT_LENGTH) {
       const recycled = this.segments.shift();
       const lastZ = this.segments[this.segments.length - 1].position.z;
