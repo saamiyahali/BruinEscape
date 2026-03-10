@@ -8,6 +8,22 @@
 		</style>
 	</head>
 	<body>
+        <div id="ui-container" style="position: absolute; top: 20px; left: 20px; z-index: 100; color: #ff3366; font-size: 32px; font-family: 'Courier New', Courier, monospace; text-shadow: 2px 2px 4px #000;">
+    <span id="hearts">❤️❤️❤️❤️❤️</span>
+    <div id="game-over" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff0000; font-size: 80px; text-align: center;">
+        GAME OVER
+        <br>
+        <span style="font-size: 20px; color: white;">PRESS SPACE TO RESTART</span>
+    </div>
+</div>
+<style>
+    #game-over {
+        animation: blink-animation 0.8s steps(2, start) infinite;
+    }
+    @keyframes blink-animation {
+        to { visibility: hidden; }
+    }
+</style>
 		<script type="module" src="/main.js"></script>
 	</body>
 </html>

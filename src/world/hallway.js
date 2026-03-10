@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { populateObstacles } from './obstacles.js';
 
 const SEGMENT_LENGTH = 40; // length of hallway segment
 const SEGMENT_COUNT = 5; // number of segments generated at a time
@@ -197,6 +198,7 @@ class HallwayManager {
     legRight.frustumCulled = false;
     group.add(legRight);
 
+    populateObstacles(group, SEGMENT_LENGTH, HALLWAY_WIDTH);
     return group;
   }
 }
