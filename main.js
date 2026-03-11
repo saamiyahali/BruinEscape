@@ -12,6 +12,8 @@ const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf });
 const player = new THREE.Mesh(playerGeo, playerMat);
 const playerBox = new THREE.Box3();
 const obstacleBox = new THREE.Box3();
+const coinBox = new THREE.Box3();
+let score = 0;
 player.position.set(0, 1, 0);
 player.castShadow = true;
 scene.add(player);
@@ -42,6 +44,16 @@ const MAX_SPEED = 45.0;
 
 const heartsUI = document.getElementById('hearts');
 const gameOverUI = document.getElementById('game-over');
+const scoreUI = document.getElementById('score');
+const finalScoreUI = document.getElementById('final-score');
+
+function updateScore() {
+    scoreUI.innerText = "Coins: " + score;
+}
+
+function updateGameOverScore() {
+    finalScoreUI.innerText = "Final Score: " + score;
+}
 
 function updateHearts() {
     heartsUI.innerText = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
@@ -50,11 +62,18 @@ function updateHearts() {
 function resetGame() {
     lives = 5;
     currentSpeed = 15.0;
+    score = 0;
+    
     isGameOver = false;
     isInvincible = false;
     gameOverUI.style.display = 'none';
+
+    updateScore();
     updateHearts();
+
     player.position.set(0, GROUND_Y, 0);
+    velY = 0.0;
+
     for (let i = 0; i < hallway.segments.length; i++) {
         hallway.segments[i].position.z = -i * 40;
     }
@@ -64,6 +83,7 @@ function resetGame() {
 const clock = new THREE.Clock();
 
 function animate() {
+
 	if (isGameOver) {
         if (input.jump()) resetGame(); 
         return; 
@@ -98,25 +118,50 @@ function animate() {
     playerBox.setFromObject(player);
     playerBox.expandByScalar(-0.1); 
 
-if (!isInvincible) {
-        for (const segment of hallway.segments) {
-            for (const child of segment.children) {
-                if (child.name === "Obstacle") {
-                    obstacleBox.setFromObject(child);
-                    if (playerBox.intersectsBox(obstacleBox)) {
-                        lives--;
-                        updateHearts();
+    const coinsToRemove = [];
 
-                        if (lives > 0) {
-                            isInvincible = true;
-                            player.position.set(0, GROUND_Y, 0);
-                            for (let i = 0; i < hallway.segments.length; i++) {
-                                hallway.segments[i].position.z = -i * 40;
-                            }
-                            setTimeout(() => { isInvincible = false; }, 1000);
-                        } else {
-                            isGameOver = true;
-                            gameOverUI.style.display = 'block';
+    for (const segment of hallway.segments) {
+        for (const child of segment.children) {
+            if (child.name === "Coin") {
+
+                coinBox.setFromObject(child);
+                coinBox.expandByScalar(-0.1);
+
+                if (playerBox.intersectsBox(coinBox)) {
+                    score++;
+                    updateScore();
+
+                    coinsToRemove.push({segment: segment, coin: child});
+
+                }
+            }
+        }
+    }
+
+    for (const entry of coinsToRemove) {
+        entry.segment.remove(entry.coin);
+    }
+
+    if (!isInvincible) {
+            for (const segment of hallway.segments) {
+                for (const child of segment.children) {
+                    if (child.name === "Obstacle") {
+                        obstacleBox.setFromObject(child);
+                        if (playerBox.intersectsBox(obstacleBox)) {
+                            lives--;
+                            updateHearts();
+
+                            if (lives > 0) {
+                                isInvincible = true;
+                                player.position.set(0, GROUND_Y, 0);
+                                for (let i = 0; i < hallway.segments.length; i++) {
+                                    hallway.segments[i].position.z = -i * 40;
+                                }
+                                setTimeout(() => { isInvincible = false; }, 1000);
+                            } else {
+                                isGameOver = true;
+                                updateGameOverScore();
+                                gameOverUI.style.display = 'block';
                         }
                     }
                 }

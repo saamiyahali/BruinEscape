@@ -6,7 +6,8 @@ const TEXTURES = {
   robot: null,
   trash: null,
   student: null,
-  pit: null 
+  pit: null,
+  coin: null
 };
 
 export function initObstacleModels() {
@@ -16,8 +17,8 @@ export function initObstacleModels() {
   TEXTURES.robot = loader.load('/assets/textures/starship.png');
   TEXTURES.trash = loader.load('/assets/textures/garbage.png');
   TEXTURES.student = loader.load('/assets/textures/student.png');
-
   TEXTURES.pit = loader.load('/assets/textures/pit.png');
+  TEXTURES.coin = loader.load('/assets/textures/coin.png');
   
   Object.values(TEXTURES).forEach(tex => {
     if (tex) {
@@ -106,5 +107,23 @@ export function populateObstacles(segmentGroup, segmentLength, hallwayWidth) {
     obstacleMesh.name = "Obstacle"; 
     
     segmentGroup.add(obstacleMesh);
+  }
+
+
+  const numCoins = Math.floor (Math.random() * 3) + 1;
+  for (let i = 0; i < numCoins; i++) {
+    if (!TEXTURES.coin) continue;
+
+    const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
+    const randomZ = (Math.random() * safeLength) - (safeLength /2);
+
+    const coinMaterial = new THREE.SpriteMaterial({ map: TEXTURES.coin, transparent: true});
+    const coinMesh = new THREE.Sprite(coinMaterial);
+    coinMesh.scale.set(2,2,1);
+    coinMesh.position.set(randomLane, 1.5, randomZ);
+    coinMesh.name = "Coin";
+
+    segmentGroup.add(coinMesh);
+
   }
 }
