@@ -41,7 +41,7 @@ let isInvincible = false;
 let isGameOver = false;
 let currentSpeed = 15.0; 
 const SPEED_INCREMENT = 0.2; 
-const MAX_SPEED = 45.0;
+const MAX_SPEED = 30.0;
 
 //Blinking
 let blinkTimer = 0;

@@ -33,8 +33,8 @@ export function initObstacleModels() {
 const OBSTACLE_TYPES = {
   robot: {
     textureKey: "robot",
-    width: 3.0,
-    height: 2.0,
+    width: 3.5,
+    height: 2.5,
     depth: 2.5,
     y: 0.75,
     kind: "sprite",
@@ -46,15 +46,15 @@ const OBSTACLE_TYPES = {
     width: 3.0,
     height: 3.0,
     depth: 2.5,
-    y: 1.0,
+    y: 1.5,
     kind: "sprite",
     blocksCoins: true,
     blocksObstacles: true
   },
   sign: {
     textureKey: "sign",
-    width: 1.5,
-    height: 1.5,
+    width: 2,
+    height: 2,
     depth: 2.0,
     y: 0.75,
     kind: "sprite",
@@ -66,7 +66,7 @@ const OBSTACLE_TYPES = {
     width: 6.0,
     height: 5.0,
     depth: 5.0,
-    y: 0.01,
+    y: 0.2,
     kind: "pit",
     blocksCoins: true,
     blocksObstacles: true
