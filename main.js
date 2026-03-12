@@ -8,7 +8,7 @@ import { initObstacleModels } from './src/world/obstacles.js';
 
 // Placeholder cube, this is where we add joe.js
 const playerGeo = new THREE.BoxGeometry(1, 2, 1);
-const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf });
+const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf, transparent: true });
 const player = new THREE.Mesh(playerGeo, playerMat);
 const playerBox = new THREE.Box3();
 const obstacleBox = new THREE.Box3();
@@ -35,6 +35,7 @@ let velY = 0.0;
 // Player movement constants
 const MOVE_SPEED = 8.0;
 
+//Lives and game state
 let lives = 5;
 let isInvincible = false;
 let isGameOver = false;
@@ -42,6 +43,13 @@ let currentSpeed = 15.0;
 const SPEED_INCREMENT = 0.2; 
 const MAX_SPEED = 45.0;
 
+//Blinking
+let blinkTimer = 0;
+const BLINK_DURATION = 2.0;
+const BLINK_INTERVAL = 0.1;
+let blinkAccumulator = 0;
+
+//UI
 const heartsUI = document.getElementById('hearts');
 const gameOverUI = document.getElementById('game-over');
 const scoreUI = document.getElementById('score');
@@ -121,7 +129,10 @@ function animate() {
     const coinsToRemove = [];
 
     for (const segment of hallway.segments) {
-        for (const child of segment.children) {
+        const spawnGroup = segment.getObjectByName("SpawnGroup");
+        if (!spawnGroup) continue;
+        
+        for (const child of spawnGroup.children) {
             if (child.name === "Coin") {
 
                 coinBox.setFromObject(child);
@@ -131,7 +142,7 @@ function animate() {
                     score++;
                     updateScore();
 
-                    coinsToRemove.push({segment: segment, coin: child});
+                    coinsToRemove.push({spawnGroup, coin: child});
 
                 }
             }
@@ -139,33 +150,69 @@ function animate() {
     }
 
     for (const entry of coinsToRemove) {
-        entry.segment.remove(entry.coin);
+        entry.spawnGroup.remove(entry.coin);
+    }
+
+    if (isInvincible) {
+        blinkTimer -= dt;
+        blinkAccumulator += dt;
+
+        if (blinkAccumulator > BLINK_INTERVAL) {
+            blinkAccumulator = 0;
+            player.material.opacity = player.material.opacity === 1 ? 0.3 : 1;
+        }
+
+        if (blinkTimer <= 0) {
+            isInvincible = false;
+            player.material.opacity = 1;
+        }
+    }
+
+    for (const segment of hallway.segments) {
+        const spawnGroup = segment.getObjectByName("SpawnGroup");
+        if (!spawnGroup) continue;
+
+        for (const child of spawnGroup.children) {
+            if (child.name === "Coin") {
+                child.rotation.y += child.userData.spinSpeed * dt;
+            }
+        }
     }
 
     if (!isInvincible) {
-            for (const segment of hallway.segments) {
-                for (const child of segment.children) {
-                    if (child.name === "Obstacle") {
-                        obstacleBox.setFromObject(child);
-                        if (playerBox.intersectsBox(obstacleBox)) {
-                            lives--;
-                            updateHearts();
+        let gotHit = false;
 
-                            if (lives > 0) {
-                                isInvincible = true;
-                                player.position.set(0, GROUND_Y, 0);
-                                for (let i = 0; i < hallway.segments.length; i++) {
-                                    hallway.segments[i].position.z = -i * 40;
-                                }
-                                setTimeout(() => { isInvincible = false; }, 1000);
-                            } else {
-                                isGameOver = true;
-                                updateGameOverScore();
-                                gameOverUI.style.display = 'block';
+        for (const segment of hallway.segments) {
+            const spawnGroup = segment.getObjectByName("SpawnGroup");
+            if (!spawnGroup) continue;
+
+            for (const child of spawnGroup.children) {
+                if (child.name === "Obstacle") {
+                    obstacleBox.setFromObject(child);
+                    obstacleBox.expandByScalar(-0.1);
+
+                    if (playerBox.intersectsBox(obstacleBox)) {
+                        lives--;
+                        updateHearts();
+                        gotHit = true;
+
+                        if (lives > 0) {
+                            isInvincible = true;
+                            blinkTimer = BLINK_DURATION;
+                            blinkAccumulator = 0;
+                            velY = 0.0;
+                            
+                        } else {
+                            isGameOver = true;
+                            updateGameOverScore();
+                            gameOverUI.style.display = 'block';
                         }
+                        break;
                     }
                 }
             }
+
+            if (gotHit) break;
         }
     }
 

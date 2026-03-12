@@ -10,6 +10,8 @@ const TEXTURES = {
   coin: null
 };
 
+const COIN_HEIGHTS = [1.5, 3.5]
+
 export function initObstacleModels() {
   const loader = new THREE.TextureLoader();
 
@@ -28,102 +30,321 @@ export function initObstacleModels() {
   });
 }
 
-export function populateObstacles(segmentGroup, segmentLength, hallwayWidth) {
+const OBSTACLE_TYPES = {
+  robot: {
+    textureKey: "robot",
+    width: 3.0,
+    height: 2.0,
+    depth: 2.5,
+    y: 0.75,
+    kind: "sprite",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  trash: {
+    textureKey: "trash",
+    width: 3.0,
+    height: 3.0,
+    depth: 2.5,
+    y: 1.0,
+    kind: "sprite",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  sign: {
+    textureKey: "sign",
+    width: 1.5,
+    height: 1.5,
+    depth: 2.0,
+    y: 0.75,
+    kind: "sprite",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  pit: {
+    textureKey: "pit",
+    width: 6.0,
+    height: 5.0,
+    depth: 5.0,
+    y: 0.01,
+    kind: "pit",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  student: {
+    textureKey: "student",
+    width: 3.0,
+    height: 5.0,
+    depth: 2.5,
+    y: 2.5,
+    kind: "sprite",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  coin: {
+    textureKey: "coin",
+    width: 2.0,
+    height: 2.0,
+    depth: 2.0,
+    y: 1.5,
+    kind: "coin",
+    blocksCoins: false,
+    blocksObstacles: false
+  }
+};
+
+
+function canPlaceObject(candidate, placedObjects) {
+  for (const placed of placedObjects) {
+    const laneDiff = Math.abs(candidate.laneIndex - placed.laneIndex);
+    const zDiff = Math.abs(candidate.z - placed.z);
+
+    const requiredZGap = (candidate.depth / 2) + (placed.depth / 2) + 1.5;
+
+    if (laneDiff === 0 && zDiff < requiredZGap) {
+      return false;
+    }
+
+    if (laneDiff === 1) {
+      const wideEnough =
+        candidate.width > 3.5 || placed.width > 3.5;
+
+      if (wideEnough && zDiff < requiredZGap - 0.5) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+
+
+function canPlaceCoin(candidate, placedObjects) {
+  for (const placed of placedObjects) {
+    const laneDiff = Math.abs(candidate.laneIndex - placed.laneIndex);
+    const zDiff = Math.abs(candidate.z - placed.z);
+
+    if (placed.type !== "coin") {
+      if (laneDiff === 0 && zDiff < placed.depth / 2 + 3.0) {
+        return false;
+      }
+
+      if (laneDiff <= 1 && placed.type === "pit" && zDiff < placed.depth / 2 + 2.5) {
+        return false;
+      }
+    }
+
+    if (placed.type === "coin") {
+      if (laneDiff === 0 && zDiff < 2.5) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+
+
+function findValidSpawn({ laneCenters, safeLength, placedObjects, objectDef, type, maxAttempts = 30 }) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const laneIndex = Math.floor(Math.random() * laneCenters.length);
+    const x = laneCenters[laneIndex];
+    const z = (Math.random() * safeLength) - (safeLength / 2);
+
+    const candidate = {
+      type,
+      laneIndex,
+      x,
+      z,
+      width: objectDef.width,
+      depth: objectDef.depth
+    };
+
+    const valid = type === "coin"
+      ? canPlaceCoin(candidate, placedObjects)
+      : canPlaceObject(candidate, placedObjects);
+
+    if (valid) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+
+
+
+function createObstacleMesh(type, def, spawn) {
+  const texture = TEXTURES[def.textureKey];
+  if (!texture) return null;
+
+  let mesh;
+
+  if (def.kind === "pit") {
+    const geometry = new THREE.PlaneGeometry(def.width, def.depth);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(spawn.x, def.y, spawn.z);
+
+    mesh.userData.isPit = true;
+    mesh.userData.width = def.width;
+    mesh.userData.depth = def.depth;
+  } else {
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true
+    });
+
+    mesh = new THREE.Sprite(material);
+    mesh.scale.set(def.width, def.height, 1);
+    mesh.position.set(spawn.x, def.y, spawn.z);
+
+    mesh.userData.isPit = false;
+  }
+
+  mesh.name = "Obstacle";
+  mesh.userData.type = type;
+  return mesh;
+}
+
+
+
+
+
+
+
+function createCoinMesh(def, spawn) {
+  const texture = TEXTURES[def.textureKey];
+  if (!texture) return null;
+
+  const coinGroup = new THREE.Group();
+
+  const geometry = new THREE.PlaneGeometry(def.width, def.height);
+
+  const frontMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.FrontSide
+  });
+
+  const backMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.FrontSide
+  });
+
+  const frontMesh = new THREE.Mesh(geometry, frontMaterial);
+  const backMesh = new THREE.Mesh(geometry, backMaterial);
+
+  frontMesh.position.z = 0.01;
+  backMesh.rotation.y = Math.PI;
+  backMesh.position.z = -0.01;
+
+  coinGroup.add(frontMesh);
+  coinGroup.add(backMesh);
+
+  const y = COIN_HEIGHTS[Math.floor(Math.random() * COIN_HEIGHTS.length)];
+  coinGroup.position.set(spawn.x, y, spawn.z);
+  coinGroup.name = "Coin";
+  coinGroup.userData.spinSpeed = 5;
+
+  return coinGroup;
+}
+
+
+
+
+
+
+export function populateObstacles(segmentGroup, segmentLength, hallwayWidth, levelConfig = null) {
   const safeLength = segmentLength - 4; 
   const laneWidth = hallwayWidth / 4;
-  const lanes = [
+  const laneCenters = [
     -laneWidth * 1.5, 
     -laneWidth * 0.5, 
      laneWidth * 0.5, 
      laneWidth * 1.5  
   ];
 
+
+  const placedObjects = [];
+  const obstacleTypes = ["robot", "trash", "sign", "pit", "student"];
+
   const numObstacles = Math.floor(Math.random() * 3) + 1;
+  let pitPlaced = false;
 
   for (let i = 0; i < numObstacles; i++) {
-    const rand = Math.random();
-    
-    let texture = null;
-    let scaleX = 2, scaleY = 2; 
-    let heightOffset = 1; 
-    let isPit = false; 
+    let type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
 
-    // Robot: 30% chance (0.00 to 0.30)
-    if (rand < 0.30) {
-      texture = TEXTURES.robot;
-      scaleX = 3.0; scaleY = 2; 
-      heightOffset = 0.75;
-    } 
-    // Trash: 25% chance (0.30 to 0.55)
-    else if (rand < 0.55) {
-      texture = TEXTURES.trash;
-      scaleX = 3; scaleY = 3; 
-      heightOffset = 1.0;
-    } 
-    // Sign: 25% chance (0.55 to 0.80)
-    else if (rand < 0.80) {
-      texture = TEXTURES.sign;
-      scaleX = 1.5; scaleY = 1.5; 
-      heightOffset = 0.75; 
-    } 
-    // Pit: 15% chance (0.80 to 0.95)
-    else if (rand < 0.95) {
-      texture = TEXTURES.pit;
-      scaleX = 6; scaleY = 5; 
-      isPit = true; 
-    } 
-    // Student: 5% chance (0.95 to 1.00)
-    else {
-      texture = TEXTURES.student;
-      scaleX = 3.0; scaleY = 5.0; 
-      heightOffset = 2.5;
-    }
+    if (type === "pit" && pitPlaced) continue;
 
-    if (!texture) continue;
+    const def = OBSTACLE_TYPES[type];
 
-    const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
-    const randomZ = (Math.random() * safeLength) - (safeLength / 2);
+    const spawn = findValidSpawn({
+      laneCenters,
+      safeLength,
+      placedObjects,
+      objectDef: def,
+      type
+    });
 
-    let obstacleMesh;
+    if (!spawn) continue;
 
-    if (isPit) {
-      const geometry = new THREE.PlaneGeometry(scaleX, scaleY);
-      const material = new THREE.MeshBasicMaterial({ 
-        map: texture, 
-        transparent: true 
-      });
-      obstacleMesh = new THREE.Mesh(geometry, material);
-      
-      obstacleMesh.rotation.x = -Math.PI / 2;
-      
-      obstacleMesh.position.set(randomLane, 0.01, randomZ);
-    } else {
-      const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
-      obstacleMesh = new THREE.Sprite(material);
-      obstacleMesh.scale.set(scaleX, scaleY, 1);
-      obstacleMesh.position.set(randomLane, heightOffset, randomZ);
-    }
-    
-    obstacleMesh.name = "Obstacle"; 
-    
-    segmentGroup.add(obstacleMesh);
+    const mesh = createObstacleMesh (type, def, spawn);
+    if (!mesh) continue;
+
+    segmentGroup.add(mesh);
+
+    placedObjects.push({
+      type,
+      laneIndex: spawn.laneIndex,
+      x: spawn.x,
+      z: spawn.z,
+      width: def.width,
+      depth: def.depth
+    });
+    if (type === "pit") pitPlaced = true;
+
   }
+  const numCoins = Math.floor(Math.random() * 3) + 1;
 
-
-  const numCoins = Math.floor (Math.random() * 3) + 1;
   for (let i = 0; i < numCoins; i++) {
-    if (!TEXTURES.coin) continue;
+    const type = "coin";
+    const def = OBSTACLE_TYPES.coin;
 
-    const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
-    const randomZ = (Math.random() * safeLength) - (safeLength /2);
+    const spawn = findValidSpawn({
+      laneCenters,
+      safeLength,
+      placedObjects,
+      objectDef: def,
+      type
+    });
 
-    const coinMaterial = new THREE.SpriteMaterial({ map: TEXTURES.coin, transparent: true});
-    const coinMesh = new THREE.Sprite(coinMaterial);
-    coinMesh.scale.set(2,2,1);
-    coinMesh.position.set(randomLane, 1.5, randomZ);
-    coinMesh.name = "Coin";
+    if (!spawn) continue;
 
-    segmentGroup.add(coinMesh);
+    const mesh = createCoinMesh(def, spawn);
+    if (!mesh) continue;
 
+    segmentGroup.add(mesh);
+
+    placedObjects.push({
+      type,
+      laneIndex: spawn.laneIndex,
+      x: spawn.x,
+      z: spawn.z,
+      width: def.width,
+      depth: def.depth
+    });
   }
 }

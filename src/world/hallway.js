@@ -68,6 +68,15 @@ class HallwayManager {
     }
   }
 
+  repopulateSegment(segment) {
+    const spawnGroup = segment.getObjectByName("SpawnGroup");
+    if (!spawnGroup) return;
+
+    spawnGroup.clear();
+
+    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
+  }
+
   // create canvas texture for the text "sign" on the beam
   createSignTexture(text) {
     const canvas = document.createElement('canvas');
@@ -104,6 +113,8 @@ class HallwayManager {
       const recycled = this.segments.shift();
       const lastZ = this.segments[this.segments.length - 1].position.z;
       recycled.position.z = lastZ - SEGMENT_LENGTH;
+      
+      this.repopulateSegment(recycled);
       this.segments.push(recycled);
     }
   }
@@ -198,7 +209,12 @@ class HallwayManager {
     legRight.frustumCulled = false;
     group.add(legRight);
 
-    populateObstacles(group, SEGMENT_LENGTH, HALLWAY_WIDTH);
+    const spawnGroup = new THREE.Group();
+    spawnGroup.name = "SpawnGroup";
+    group.add(spawnGroup);
+
+    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
+
     return group;
   }
 }
