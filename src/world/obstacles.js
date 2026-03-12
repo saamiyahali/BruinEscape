@@ -277,11 +277,21 @@ export function populateObstacles(segmentGroup, segmentLength, hallwayWidth, lev
      laneWidth * 1.5  
   ];
 
+  if (!levelConfig) {
+    levelConfig = {
+      obstacleTypes: ["robot", "trash", "sign", "pit", "student"],
+      obstacleMin: 1,
+      obstacleMax: 3,
+      coinMin: 1,
+      coinMax: 3
+    };
+  }
+
 
   const placedObjects = [];
-  const obstacleTypes = ["robot", "trash", "sign", "pit", "student"];
+  const obstacleTypes = levelConfig.obstacleTypes;
 
-  const numObstacles = Math.floor(Math.random() * 3) + 1;
+  const numObstacles = Math.floor(Math.random() * (levelConfig.obstacleMax - levelConfig.obstacleMin + 1)) + levelConfig.obstacleMin;
   let pitPlaced = false;
 
   for (let i = 0; i < numObstacles; i++) {
@@ -317,7 +327,7 @@ export function populateObstacles(segmentGroup, segmentLength, hallwayWidth, lev
     if (type === "pit") pitPlaced = true;
 
   }
-  const numCoins = Math.floor(Math.random() * 3) + 1;
+  const numCoins = Math.floor(Math.random() * (levelConfig.coinMax - levelConfig.coinMin + 1)) + levelConfig.coinMin;
 
   for (let i = 0; i < numCoins; i++) {
     const type = "coin";

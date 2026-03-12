@@ -5,6 +5,7 @@ import { Input } from './src/player/input.js';
 import { createHallway, updateHallway } from './src/world/hallway.js';
 import { HALLWAY_BOUNDS } from './src/world/bounds.js';
 import { initObstacleModels } from './src/world/obstacles.js';
+import { LEVELS } from './src/world/levels.js';
 
 // Placeholder cube, this is where we add joe.js
 const playerGeo = new THREE.BoxGeometry(1, 2, 1);
@@ -19,8 +20,7 @@ player.castShadow = true;
 scene.add(player);
 
 initObstacleModels();
-// Hallway
-const hallway = createHallway(scene);
+
 
 // Placeholder input, add input.js here
 const input = new Input();
@@ -55,6 +55,13 @@ const gameOverUI = document.getElementById('game-over');
 const scoreUI = document.getElementById('score');
 const finalScoreUI = document.getElementById('final-score');
 
+//levels
+let currentLevelIndex = 0;
+let currentLevel = LEVELS[currentLevelIndex];
+
+// Hallway
+const hallway = createHallway(scene, currentLevel);
+
 function updateScore() {
     scoreUI.innerText = "Coins: " + score;
 }
@@ -69,7 +76,7 @@ function updateHearts() {
 
 function resetGame() {
     lives = 5;
-    currentSpeed = 15.0;
+    currentSpeed = currentLevel.speed;
     score = 0;
     
     isGameOver = false;
@@ -85,6 +92,22 @@ function resetGame() {
     for (let i = 0; i < hallway.segments.length; i++) {
         hallway.segments[i].position.z = -i * 40;
     }
+}
+
+function levelComplete() {
+
+    currentLevelIndex++;
+
+    if (currentLevelIndex >= LEVELS.length) {
+        alert("You beat the game!");
+        return;
+    }
+
+    currentLevel = LEVELS[currentLevelIndex];
+    currentSpeed = currentLevel.speed;
+    hallway.setLevelConfig(currentLevel);
+
+    resetGame();
 }
 
 // Game loop
@@ -141,6 +164,9 @@ function animate() {
                 if (playerBox.intersectsBox(coinBox)) {
                     score++;
                     updateScore();
+                    if (score >= currentLevel.goalCoins) {
+                        levelComplete();
+                    }
 
                     coinsToRemove.push({spawnGroup, coin: child});
 
@@ -148,6 +174,8 @@ function animate() {
             }
         }
     }
+
+
 
     for (const entry of coinsToRemove) {
         entry.spawnGroup.remove(entry.coin);

@@ -68,13 +68,20 @@ class HallwayManager {
     }
   }
 
+  setLevelConfig(levelConfig) {
+    this.levelConfig = levelConfig;
+    for (const segment of this.segments) {
+      this.repopulateSegment(segment);
+    }
+  }
+
   repopulateSegment(segment) {
     const spawnGroup = segment.getObjectByName("SpawnGroup");
     if (!spawnGroup) return;
 
     spawnGroup.clear();
 
-    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
+    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH, this.levelConfig);
   }
 
   // create canvas texture for the text "sign" on the beam
@@ -219,8 +226,8 @@ class HallwayManager {
   }
 }
 
-export function createHallway(scene) {
-  return new HallwayManager(scene);
+export function createHallway(scene, levelConfig) {
+  return new HallwayManager(scene, levelConfig);
 }
 
 export function updateHallway(hallway, dt) {
