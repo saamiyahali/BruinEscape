@@ -31,6 +31,10 @@ export class Input {
         return this.jumpPressed;
     }
 
+    slide() {
+        return !!(this.keys["s"] || this.keys["S"] || this.keys["ArrowDown"]);
+    }
+
     endFrame() {
         this.jumpPressed = false;
     }
