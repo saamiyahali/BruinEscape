@@ -6,19 +6,33 @@ import { createHallway, updateHallway } from './src/world/hallway.js';
 import { HALLWAY_BOUNDS } from './src/world/bounds.js';
 import { initObstacleModels } from './src/world/obstacles.js';
 import { LEVELS } from './src/world/levels.js';
+import {
+  initJoeTextures,
+  createJoe,
+  setJoeJump,
+  setJoeDirection,
+  updateJoe
+} from './src/player/joe.js';
 
-// Placeholder cube, this is where we add joe.js
+// invsible collision box
 const playerGeo = new THREE.BoxGeometry(1, 2, 1);
-const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf, transparent: true });
+const playerMat = new THREE.MeshPhongMaterial({ color: 0x3284bf, transparent: true, opacity: 0 });
 const player = new THREE.Mesh(playerGeo, playerMat);
 const playerBox = new THREE.Box3();
 const obstacleBox = new THREE.Box3();
 const coinBox = new THREE.Box3();
+
 let score = 0;
+
 player.position.set(0, 1, 0);
-player.castShadow = true;
-player.receiveShadow = true;
+player.castShadow = false;
+player.receiveShadow = false;
 scene.add(player);
+
+initJoeTextures();
+const joeVisual = createJoe();
+player.add(joeVisual);
+
 
 //levels
 let currentLevelIndex = 0;
@@ -128,7 +142,7 @@ function resumeGame() {
 }
 
 function showLevelCompleteScreen() {
-    gameState = GAME_STATES.LEVEL_COMPLETE;
+    gameState = GAME_STATES.LEVEL_COMPLETED;
     hideAllMenus();
 
     levelCompleteTextUI.innerText = `Level ${currentLevel.id} complete!`;
@@ -291,7 +305,9 @@ function resetGame() {
     isInvincible = false;
     blinkTimer = 0;
     blinkAccumulator = 0;
-    player.material.opacity = 1;
+    
+    player.material.opacity = 0;
+    joeVisual.material.opacity = 1;
 
     updateScore();
     updateHearts();
@@ -299,6 +315,9 @@ function resetGame() {
 
     player.position.set(0, GROUND_Y, 0);
     velY = 0.0;
+
+    setJoeJump(joeVisual, false);
+    setJoeDirection(joeVisual, false);
 
     hallway.setLevelConfig(currentLevel);
     hallway.resetSegments();
@@ -367,6 +386,7 @@ function animate() {
 	//Jump
 	if(input.jump() && player.position.y <= GROUND_Y + 1e-4) {
 		velY = JUMP_VEL;
+        setJoeJump(joeVisual, true);
 	}
 
     const fastFallMultiplier = input.slide() && player.position.y > GROUND_Y + 1e-4 ? 5 : 1.0;
@@ -379,16 +399,30 @@ function animate() {
 	if (player.position.y < GROUND_Y) {
 		player.position.y = GROUND_Y;
 		velY = 0.0;
+        setJoeJump(joeVisual, false);
 	}
 	// left right input from input.js
-	if (input.left())  player.position.x -= MOVE_SPEED * dt;
-	if (input.right()) player.position.x += MOVE_SPEED * dt;
+	if (input.left()) {
+        player.position.x -= MOVE_SPEED * dt;
+        setJoeDirection(joeVisual, true);
+    }  
+	if (input.right()) {
+        player.position.x += MOVE_SPEED * dt;
+        setJoeDirection(joeVisual, false);
+    }
 
 	// Keep the player within hallway bounds
 	player.position.x = Math.max(HALLWAY_BOUNDS.minX, Math.min(HALLWAY_BOUNDS.maxX, player.position.x));
+    
+    updateJoe(joeVisual, camera);
 
-    playerBox.setFromObject(player);
-    playerBox.expandByScalar(-0.1); 
+    playerBox.setFromCenterAndSize(
+        player.position,
+        new THREE.Vector3(1, 2, 1)
+    );
+    playerBox.expandByScalar(-0.1);
+
+    
 
     const coinsToRemove = [];
 
@@ -428,12 +462,12 @@ function animate() {
 
         if (blinkAccumulator > BLINK_INTERVAL) {
             blinkAccumulator = 0;
-            player.material.opacity = player.material.opacity === 1 ? 0.3 : 1;
+            joeVisual.material.opacity = joeVisual.material.opacity === 1 ? 0.3 : 1;
         }
 
         if (blinkTimer <= 0) {
             isInvincible = false;
-            player.material.opacity = 1;
+            joeVisual.material.opacity = 1;
         }
     }
 
