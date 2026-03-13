@@ -248,27 +248,48 @@ function createObstacleMesh(type, def, spawn) {
     mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(spawn.x, def.y, spawn.z);
+    mesh.receiveShadow = true;
 
     mesh.userData.isPit = true;
     mesh.userData.width = def.width;
     mesh.userData.depth = def.depth;
   } else {
     const geometry = new THREE.PlaneGeometry(def.width, def.height);
+    
+    let opacity = 1.0;
+    if (type === "slenderman") {
+      opacity = 0.5;
+    }
+    
     const material = new THREE.MeshPhongMaterial({
       map: texture,
-      transparent: true
+      transparent: true,
+      alphaTest: 0.5,
+      side: THREE.DoubleSide
     });
+    
+    
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
 
-    mesh = new THREE.Sprite(material);
-    mesh.scale.set(def.width, def.height, 1);
     let y = def.y;
+
     if (type === "alien") {
       y = THREE.MathUtils.randFloat(3.5, 4.5);
     }
 
-    mesh.position.set(spawn.x, y, spawn.z);
+    if (type === "fish") {
+      y = THREE.MathUtils.randFloat(1.5, 5.0);   
 
+      if (Math.random() < 0.5) {
+        mesh.scale.x = -1;
+      }
+    }
+
+    mesh.position.set(spawn.x, y, spawn.z);
     mesh.userData.isPit = false;
+    mesh.userData.billboard = true;
   }
 
   mesh.name = "Obstacle";
