@@ -68,7 +68,26 @@
     <div id="game-over">
         <div>GAME OVER</div>
         <div id="final-score">Final Score: 0</div>
-        <div id="restart-text">PRESS SPACE TO RESTART</div>
+        <button id="retry-button">Retry</button>
+        <button id="game-over-level-select-button">Level Select</button>
+    </div>
+
+    <div id="start-screen">
+        <h1>Bruin Escape</h1>
+        <button id="start-button">Start Game</button>
+        <button id="level-select-button">Level Select</button>
+    </div>
+
+    <div id="level-select-screen" style="display:none;">
+        <h2>Select Level</h2>
+        <div id="level-buttons"></div>
+        <button id="back-to-start-button">Back</button>
+    </div>
+
+    <div id="victory-screen" style="display:none;">
+        <h1>You Win!</h1>
+        <p id="victory-text"></p>
+        <button id="victory-level-select-button">Level Select</button>
     </div>
 
     <script type="module" src="/main.js"></script>

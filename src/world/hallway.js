@@ -4,7 +4,7 @@ import { populateObstacles } from './obstacles.js';
 const SEGMENT_LENGTH = 40; // length of hallway segment
 const SEGMENT_COUNT = 5; // number of segments generated at a time
 const HALLWAY_WIDTH = 14; 
-const HALLWAY_SPEED = 15.0;
+const HALLWAY_SPEED = 15;
 
 // boelter hall colors
 const COLORS = {
@@ -19,10 +19,10 @@ const COLORS = {
 };
 
 class HallwayManager {
-  constructor(scene) {
+  constructor(scene, levelConfig) {
     this.scene = scene;
     this.segments = []; // stores the 5 hallway segments
-    this.speed = HALLWAY_SPEED;
+    this.speed = levelConfig?.speed ?? HALLWAY_SPEED; // forward speed of the hallway, can be modified by level config
 
     // geometries
     this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH); 
@@ -62,7 +62,7 @@ class HallwayManager {
     // initlialize the first 5 segments and place them consecutively
     for (let i = 0; i < SEGMENT_COUNT; i++) {
       const zPos = -i * SEGMENT_LENGTH;
-      const segment = this.createSegment(zPos, i);
+      const segment = this.createSegment(zPos, i, i === 0);
       this.segments.push(segment);
       this.scene.add(segment);
     }
@@ -82,6 +82,19 @@ class HallwayManager {
     spawnGroup.clear();
 
     populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH, this.levelConfig);
+  }
+
+  resetSegments() {
+    for (let i = 0; i < SEGMENT_COUNT; i++) {
+      const segment = this.segments[i];
+      segment.position.z = -i * SEGMENT_LENGTH;
+      const spawnGroup = segment.getObjectByName("SpawnGroup");
+      if (!spawnGroup) continue;
+        spawnGroup.clear();
+      if (i !== 0) {
+        populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH, this.levelConfig);
+      }
+    }
   }
 
   // create canvas texture for the text "sign" on the beam
@@ -126,7 +139,7 @@ class HallwayManager {
     }
   }
 
-  createSegment(zStart, index) {
+  createSegment(zStart, index, skipsawns = false) {
     const group = new THREE.Group();
     group.position.z = zStart;
 
@@ -220,11 +233,16 @@ class HallwayManager {
     spawnGroup.name = "SpawnGroup";
     group.add(spawnGroup);
 
-    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
+
+    if (!skipsawns) {
+      populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
+    }
 
     return group;
   }
 }
+
+
 
 export function createHallway(scene, levelConfig) {
   return new HallwayManager(scene, levelConfig);

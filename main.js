@@ -19,8 +19,67 @@ player.position.set(0, 1, 0);
 player.castShadow = true;
 scene.add(player);
 
+//levels
+let currentLevelIndex = 0;
+let currentLevel = LEVELS[currentLevelIndex];
+
 initObstacleModels();
 
+const GAME_STATES = {
+    START: "start",
+    LEVEL_SELECT: "level_select",
+    PLAYING: "playing",
+    GAME_OVER: "game_over",
+    VICTORY: "victory"
+};
+
+let gameState = GAME_STATES.START;
+let unlockedLevel = Number(localStorage.getItem("unlockedLevel") || 1);
+
+const startScreenUI = document.getElementById('start-screen');
+const levelSelectScreenUI = document.getElementById('level-select-screen');
+const victoryScreenUI = document.getElementById('victory-screen');
+const levelButtonsUI = document.getElementById('level-buttons');
+
+const startButton = document.getElementById('start-button');
+const levelSelectButton = document.getElementById('level-select-button');
+const backToStartButton = document.getElementById('back-to-start-button');
+const retryButton = document.getElementById('retry-button');
+const gameOverLevelSelectButton = document.getElementById('game-over-level-select-button');
+const victoryLevelSelectButton = document.getElementById('victory-level-select-button');
+
+function hideAllMenus() {
+    startScreenUI.style.display = 'none';
+    levelSelectScreenUI.style.display = 'none';
+    gameOverUI.style.display = 'none';
+    victoryScreenUI.style.display = 'none';
+}
+
+function showStartScreen() {
+    gameState = GAME_STATES.START;
+    hideAllMenus();
+    startScreenUI.style.display = 'block';
+}
+
+function showLevelSelectScreen() {
+    gameState = GAME_STATES.LEVEL_SELECT;
+    hideAllMenus();
+    renderLevelButtons();
+    levelSelectScreenUI.style.display = 'block';
+}
+
+function showGameOverScreen() {
+    gameState = GAME_STATES.GAME_OVER;
+    updateGameOverScore();
+    hideAllMenus();
+    gameOverUI.style.display = 'block';
+}
+
+function showVictoryScreen() {
+    gameState = GAME_STATES.VICTORY;
+    hideAllMenus();
+    victoryScreenUI.style.display = 'block';
+}
 
 // Placeholder input, add input.js here
 const input = new Input();
@@ -55,9 +114,6 @@ const gameOverUI = document.getElementById('game-over');
 const scoreUI = document.getElementById('score');
 const finalScoreUI = document.getElementById('final-score');
 
-//levels
-let currentLevelIndex = 0;
-let currentLevel = LEVELS[currentLevelIndex];
 
 // Hallway
 const hallway = createHallway(scene, currentLevel);
@@ -74,6 +130,48 @@ function updateHearts() {
     heartsUI.innerText = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
 }
 
+function renderLevelButtons() {
+    levelButtonsUI.innerHTML = "";
+
+    LEVELS.forEach((level, index) => {
+        const button = document.createElement("button");
+        button.textContent = `Level ${level.id}`;
+        button.disabled = level.id > unlockedLevel;
+
+        button.addEventListener("click", () => {
+            currentLevelIndex = index;
+            currentLevel = LEVELS[currentLevelIndex];
+            hallway.setLevelConfig(currentLevel);
+            resetGame();
+            hideAllMenus();
+            gameState = GAME_STATES.PLAYING;
+        });
+
+        levelButtonsUI.appendChild(button);
+    });
+}
+
+startButton.addEventListener("click", () => {
+    currentLevelIndex = 0;
+    currentLevel = LEVELS[currentLevelIndex];
+    hallway.setLevelConfig(currentLevel);
+    resetGame();
+    hideAllMenus();
+    gameState = GAME_STATES.PLAYING;
+});
+
+levelSelectButton.addEventListener("click", showLevelSelectScreen);
+backToStartButton.addEventListener("click", showStartScreen);
+
+retryButton.addEventListener("click", () => {
+    resetGame();
+    hideAllMenus();
+    gameState = GAME_STATES.PLAYING;
+});
+
+gameOverLevelSelectButton.addEventListener("click", showLevelSelectScreen);
+victoryLevelSelectButton.addEventListener("click", showLevelSelectScreen);
+
 function resetGame() {
     lives = 5;
     currentSpeed = currentLevel.speed;
@@ -89,24 +187,25 @@ function resetGame() {
     player.position.set(0, GROUND_Y, 0);
     velY = 0.0;
 
-    for (let i = 0; i < hallway.segments.length; i++) {
-        hallway.segments[i].position.z = -i * 40;
-    }
+    hallway.resetSegments();
 }
 
 function levelComplete() {
+    const nextUnlocked = Math.min(currentLevelIndex + 2, LEVELS.length);
+    if (nextUnlocked > unlockedLevel) {
+        unlockedLevel = nextUnlocked;
+        localStorage.setItem("unlockedLevel", String(unlockedLevel));
+    }
 
     currentLevelIndex++;
 
     if (currentLevelIndex >= LEVELS.length) {
-        alert("You beat the game!");
+        showVictoryScreen();
         return;
     }
 
     currentLevel = LEVELS[currentLevelIndex];
-    currentSpeed = currentLevel.speed;
     hallway.setLevelConfig(currentLevel);
-
     resetGame();
 }
 
@@ -114,6 +213,11 @@ function levelComplete() {
 const clock = new THREE.Clock();
 
 function animate() {
+
+    if (gameState !== GAME_STATES.PLAYING) {
+        renderer.render(scene, camera);
+        return;
+    }
 
 	if (isGameOver) {
         if (input.jump()) resetGame(); 
@@ -232,8 +336,7 @@ function animate() {
                             
                         } else {
                             isGameOver = true;
-                            updateGameOverScore();
-                            gameOverUI.style.display = 'block';
+                            showGameOverScreen();
                         }
                         break;
                     }
