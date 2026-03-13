@@ -499,7 +499,7 @@ function animate() {
 
     for (const child of spawnGroup.children) {
       if (child.name === "Coin") {
-        child.rotation.y += child.userData.spinSpeed * dt;
+        child.rotation.z += child.userData.spinSpeed * dt;
       }
     }
   }
