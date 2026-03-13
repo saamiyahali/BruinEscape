@@ -201,14 +201,16 @@ function createObstacleMesh(type, def, spawn) {
     mesh.userData.width = def.width;
     mesh.userData.depth = def.depth;
   } else {
-    const material = new THREE.SpriteMaterial({
+    const geometry = new THREE.PlaneGeometry(def.width, def.height);
+    const material = new THREE.MeshPhongMaterial({
       map: texture,
-      transparent: true
+      alphaTest: 0.5,
+      side: THREE.DoubleSide
     });
 
-    mesh = new THREE.Sprite(material);
-    mesh.scale.set(def.width, def.height, 1);
+    mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(spawn.x, def.y, spawn.z);
+    mesh.castShadow = true;
 
     mesh.userData.isPit = false;
   }
@@ -232,20 +234,22 @@ function createCoinMesh(def, spawn) {
 
   const geometry = new THREE.PlaneGeometry(def.width, def.height);
 
-  const frontMaterial = new THREE.MeshBasicMaterial({
+  const frontMaterial = new THREE.MeshPhongMaterial({
     map: texture,
-    transparent: true,
+    alphaTest: 0.5,
     side: THREE.FrontSide
   });
 
-  const backMaterial = new THREE.MeshBasicMaterial({
+  const backMaterial = new THREE.MeshPhongMaterial({
     map: texture,
-    transparent: true,
+    alphaTest: 0.5,
     side: THREE.FrontSide
   });
 
   const frontMesh = new THREE.Mesh(geometry, frontMaterial);
+  frontMesh.castShadow = true;
   const backMesh = new THREE.Mesh(geometry, backMaterial);
+  backMesh.castShadow = true;
 
   frontMesh.position.z = 0.01;
   backMesh.rotation.y = Math.PI;

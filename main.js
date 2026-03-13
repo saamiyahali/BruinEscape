@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, renderer } from './src/core/scene.js';
+import { scene, renderer, mainLight } from './src/core/scene.js';
 import { camera } from './src/core/camera.js';
 import { Input } from './src/player/input.js';
 import { createHallway, updateHallway } from './src/world/hallway.js';
@@ -17,6 +17,7 @@ const coinBox = new THREE.Box3();
 let score = 0;
 player.position.set(0, 1, 0);
 player.castShadow = true;
+player.receiveShadow = true;
 scene.add(player);
 
 //levels
@@ -348,6 +349,10 @@ function animate() {
     }
 
     updateHallway(hallway, dt);
+
+    mainLight.position.set(player.position.x + 2, 12, player.position.z + 5);
+    mainLight.target.position.set(player.position.x, 0, player.position.z - 15);
+
     input.endFrame();
     renderer.render(scene, camera);
 }

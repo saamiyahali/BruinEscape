@@ -165,6 +165,7 @@ class HallwayManager {
         const xPos = (x * this.tileSize) - (HALLWAY_WIDTH / 2) + (this.tileSize / 2);
         const zPos = (z * this.tileSize) - (SEGMENT_LENGTH / 2) + (this.tileSize / 2);
         tile.position.set(xPos, zPos, 0);
+        tile.receiveShadow = true;
         tile.frustumCulled = false;
         tileGroup.add(tile);
         
