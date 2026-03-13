@@ -18,6 +18,7 @@ const COLORS = {
   goldText: 0x7d6522
 };
 
+
 class HallwayManager {
   constructor(scene, levelConfig) {
     this.scene = scene;
