@@ -118,14 +118,14 @@ export const LEVELS = [
         speed: 30,
         obstacleTypes: ["sign", "trash", "student", "pit", "robot", "alien", "slenderman", "fish"],
         obstacleWeights: {
-            sign: 2,
-            trash: 2,
+            sign: 0.5,
+            trash: 0.5,
             student: 0.1,
-            pit: 2,
-            robot: 2,
-            alien: 3,
+            pit: 0.5,
+            robot: 0.5,
+            alien: 0.25,
             slenderman: 0.1,
-            fish: 5
+            fish: 6
         },
         obstacleMin: 5,
         obstacleMax: 7,
