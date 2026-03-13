@@ -42,6 +42,44 @@
             user-select: none;
         }
 
+        #start-screen {
+            overflow: hidden;
+        }
+
+        #start-mascot {
+            position: absolute;
+            right: -40px;
+            bottom: -10px;
+            height: 85vh;
+            max-height: 900px;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.9;
+            filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+        }
+
+        #start-screen .menu-panel {
+            position: relative;
+            z-index: 2;
+        }
+
+        .victory-mascot {
+            position: absolute;
+            right: -40px;
+            bottom: -10px;
+            height: 85vh;
+            max-height: 900px;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.9;
+            filter: drop-shadow(0 10px 24px rgba(0,0,0,0.45));
+        }
+
+        #victory-screen .menu-panel {
+            position: relative;
+            z-index: 2;
+        }
+
         #score {
             margin-top: 8px;
             color: var(--ucla-gold);
@@ -196,6 +234,8 @@
     </div>
 
     <div id="start-screen" class="overlay-screen show">
+        <img id="start-mascot" src="/assets/textures/bruinrun.png">
+
         <div class="menu-panel">
             <h1 class="menu-title">Bruin Escape</h1>
             <p id="controls-text" class="menu-subtitle">
@@ -248,6 +288,8 @@
     </div>
 
     <div id="victory-screen" class="overlay-screen">
+
+        <img class="victory-mascot" src="/assets/textures/bruinrun.png">
         <div class="menu-panel">
             <h1 class="menu-title">You Win!</h1>
             <p id="victory-text">Joe made it to his Final!</p>
