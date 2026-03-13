@@ -116,19 +116,12 @@ export const LEVELS = [
         id: 8,
         goalCoins: 25,
         speed: 30,
-        obstacleTypes: ["sign", "trash", "student", "pit", "robot", "alien", "slenderman", "fish"],
+        obstacleTypes: ["fish"],
         obstacleWeights: {
-            sign: 0.5,
-            trash: 0.5,
-            student: 0.1,
-            pit: 0.5,
-            robot: 0.5,
-            alien: 0.25,
-            slenderman: 0.1,
-            fish: 6
+            fish: 1
         },
         obstacleMin: 5,
-        obstacleMax: 7,
+        obstacleMax: 8,
         coinMin: 1,
         coinMax: 1
     },
