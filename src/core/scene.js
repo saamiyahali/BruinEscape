@@ -11,9 +11,10 @@ document.body.appendChild(renderer.domElement);
 // Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
+scene.fog = new THREE.Fog(0x121212, 20, 150);
 
 // Lighting
-const ambientLight = new THREE.AmbientLight(0x404040);
+const ambientLight = new THREE.AmbientLight(0x404040, 3);
 scene.add(ambientLight);
 
 const mainLight = new THREE.DirectionalLight(0xffffff, 2.5);

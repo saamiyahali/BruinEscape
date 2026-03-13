@@ -28,6 +28,9 @@ class HallwayManager {
     this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH);
     this.wallMat = new THREE.MeshPhongMaterial({ color: COLORS.wall });
 
+    this.ceilingGeo = new THREE.PlaneGeometry(HALLWAY_WIDTH, SEGMENT_LENGTH);
+    this.ceilingMat = new THREE.MeshPhongMaterial({color: 0xe8e8dc,side: THREE.DoubleSide,});
+
     this.doorGeo = new THREE.BoxGeometry(0.5, 7, 4);
     this.doorMat = new THREE.MeshPhongMaterial({ color: COLORS.door });
 
@@ -225,6 +228,14 @@ class HallwayManager {
     door2.position.set(HALLWAY_WIDTH / 2 - 0.2, 3.5, 10);
     door2.frustumCulled = false;
     group.add(door2);
+
+    const ceiling = new THREE.Mesh(this.ceilingGeo, this.ceilingMat);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.set(0, 10, 0); // same general top height as walls
+    ceiling.receiveShadow = true;
+    ceiling.castShadow = false;
+    ceiling.frustumCulled = false;
+    group.add(ceiling);
 
     // beam
     const isSignBeam = index === 0;
