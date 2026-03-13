@@ -20,15 +20,15 @@ const mainLight = new THREE.DirectionalLight(0xffffff, 2.5);
 mainLight.position.set(2, 12, 5);
 mainLight.castShadow = true;
 
-mainLight.shadow.camera.left = -12;
-mainLight.shadow.camera.right = 12;
-mainLight.shadow.camera.top = 10;
-mainLight.shadow.camera.bottom = -45;
+mainLight.shadow.camera.left = -25;
+mainLight.shadow.camera.right = 25;
+mainLight.shadow.camera.top = 50;
+mainLight.shadow.camera.bottom = -60;
 mainLight.shadow.camera.near = 0.1;
-mainLight.shadow.camera.far = 80;
+mainLight.shadow.camera.far = 200;
 
-mainLight.shadow.mapSize.width = 2048;
-mainLight.shadow.mapSize.height = 2048;
+mainLight.shadow.mapSize.width = 8192;
+mainLight.shadow.mapSize.height = 8192;
 mainLight.shadow.bias = -0.002;
 
 scene.add(mainLight);
