@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import { populateObstacles } from './obstacles.js';
+import { populateObstacles } from "./obstacles.js";
 
 const SEGMENT_LENGTH = 40; // length of hallway segment
 const SEGMENT_COUNT = 5; // number of segments generated at a time
-const HALLWAY_WIDTH = 14; 
+const HALLWAY_WIDTH = 14;
 const HALLWAY_SPEED = 15;
 
 // boelter hall colors
@@ -13,11 +13,10 @@ const COLORS = {
   floorPink: 0xd6a8a8,
   wall: 0xf5f5dc,
   door: 0xc48f28,
-  beamDark: 0x5e5d5c,    
-  beamRed: 0x880000,  
-  goldText: 0x7d6522
+  beamDark: 0x5e5d5c,
+  beamRed: 0x880000,
+  goldText: 0x7d6522,
 };
-
 
 class HallwayManager {
   constructor(scene, levelConfig) {
@@ -26,7 +25,7 @@ class HallwayManager {
     this.speed = levelConfig?.speed ?? HALLWAY_SPEED; // forward speed of the hallway, can be modified by level config
 
     // geometries
-    this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH); 
+    this.wallGeo = new THREE.BoxGeometry(1, 10, SEGMENT_LENGTH);
     this.wallMat = new THREE.MeshPhongMaterial({ color: COLORS.wall });
 
     this.doorGeo = new THREE.BoxGeometry(0.5, 7, 4);
@@ -40,23 +39,35 @@ class HallwayManager {
     this.matBeamRed = new THREE.MeshPhongMaterial({ color: COLORS.beamRed });
     this.matBeamDark = new THREE.MeshPhongMaterial({ color: COLORS.beamDark });
 
-    // paint the Boelter Hall text onto a texture  
+    // paint the Boelter Hall text onto a texture
     const textTexture = this.createSignTexture("Boelter Hall");
     this.matSignFace = new THREE.MeshBasicMaterial({ map: textTexture });
 
-    // calculate tilze size dynamically
     const tileSize = HALLWAY_WIDTH / 10;
     this.tileSize = tileSize;
-    this.tileGeo = new THREE.PlaneGeometry(tileSize, tileSize);
+    this.rows = Math.round(SEGMENT_LENGTH / tileSize);
+    this.tileSizeZ = SEGMENT_LENGTH / this.rows;
+    this.tileGeo = new THREE.PlaneGeometry(tileSize, this.tileSizeZ);
 
     // floor materials for the white, grey, pink tiles
-    this.matBase = new THREE.MeshPhongMaterial({ color: COLORS.floorBase, side: THREE.DoubleSide });
-    this.matGrey = new THREE.MeshPhongMaterial({ color: COLORS.floorGrey, side: THREE.DoubleSide });
-    this.matPink = new THREE.MeshPhongMaterial({ color: COLORS.floorPink, side: THREE.DoubleSide });
+    this.matBase = new THREE.MeshPhongMaterial({
+      color: COLORS.floorBase,
+      side: THREE.DoubleSide,
+    });
+    this.matGrey = new THREE.MeshPhongMaterial({
+      color: COLORS.floorGrey,
+      side: THREE.DoubleSide,
+    });
+    this.matPink = new THREE.MeshPhongMaterial({
+      color: COLORS.floorPink,
+      side: THREE.DoubleSide,
+    });
 
-    // for tiley look, create a grid material and edge geometry for outlines 
-    this.gridMat = new THREE.LineBasicMaterial({ 
-      color: 0x555555, opacity: 0.15, transparent: true 
+    // for tiley look, create a grid material and edge geometry for outlines
+    this.gridMat = new THREE.LineBasicMaterial({
+      color: 0x555555,
+      opacity: 0.15,
+      transparent: true,
     });
     this.tileOutlineGeo = new THREE.EdgesGeometry(this.tileGeo);
 
@@ -82,7 +93,12 @@ class HallwayManager {
 
     spawnGroup.clear();
 
-    populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH, this.levelConfig);
+    populateObstacles(
+      spawnGroup,
+      SEGMENT_LENGTH,
+      HALLWAY_WIDTH,
+      this.levelConfig,
+    );
   }
 
   resetSegments() {
@@ -91,27 +107,32 @@ class HallwayManager {
       segment.position.z = -i * SEGMENT_LENGTH;
       const spawnGroup = segment.getObjectByName("SpawnGroup");
       if (!spawnGroup) continue;
-        spawnGroup.clear();
+      spawnGroup.clear();
       if (i !== 0) {
-        populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH, this.levelConfig);
+        populateObstacles(
+          spawnGroup,
+          SEGMENT_LENGTH,
+          HALLWAY_WIDTH,
+          this.levelConfig,
+        );
       }
     }
   }
 
   // create canvas texture for the text "sign" on the beam
   createSignTexture(text) {
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
 
     canvas.width = 1024;
     canvas.height = 256;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     // text details
-    ctx.font = 'bold 120px Arial'; 
-    ctx.fillStyle = '#b79c15cd';   
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
+    ctx.font = "bold 120px Arial";
+    ctx.fillStyle = "#b79c15cd";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
     // shadow for the text
     ctx.shadowColor = "rgba(0,0,0,0.5)";
     ctx.shadowBlur = 10;
@@ -134,7 +155,7 @@ class HallwayManager {
       const recycled = this.segments.shift();
       const lastZ = this.segments[this.segments.length - 1].position.z;
       recycled.position.z = lastZ - SEGMENT_LENGTH;
-      
+
       this.repopulateSegment(recycled);
       this.segments.push(recycled);
     }
@@ -146,7 +167,7 @@ class HallwayManager {
 
     // calculate how many rows fit in the 40 units
     const cols = 10;
-    const rows = Math.ceil(SEGMENT_LENGTH / this.tileSize);
+    const rows = this.rows;
     const tileGroup = new THREE.Group();
     tileGroup.rotation.x = -Math.PI / 2;
 
@@ -156,22 +177,26 @@ class HallwayManager {
         let mat = this.matBase;
         if (x === 1 || x === 8) mat = this.matGrey;
         if (x >= 3 && x <= 6) {
-          const pRow = z % 8;
+          const pRow = (z + index * rows) % 8;
           if (pRow >= 2) {
-             const isEdge = (pRow === 2 || pRow === 7 || x === 3 || x === 6);
-             mat = isEdge ? this.matPink : this.matGrey;
+            const isEdge = pRow === 2 || pRow === 7 || x === 3 || x === 6;
+            mat = isEdge ? this.matPink : this.matGrey;
           }
         }
         const tile = new THREE.Mesh(this.tileGeo, mat);
-        const xPos = (x * this.tileSize) - (HALLWAY_WIDTH / 2) + (this.tileSize / 2);
-        const zPos = (z * this.tileSize) - (SEGMENT_LENGTH / 2) + (this.tileSize / 2);
+        const xPos = x * this.tileSize - HALLWAY_WIDTH / 2 + this.tileSize / 2;
+        const zPos =
+          z * this.tileSizeZ - SEGMENT_LENGTH / 2 + this.tileSizeZ / 2;
         tile.position.set(xPos, zPos, 0);
         tile.receiveShadow = true;
         tile.frustumCulled = false;
         tileGroup.add(tile);
-        
+
         // add wireframe grid
-        const outline = new THREE.LineSegments(this.tileOutlineGeo, this.gridMat);
+        const outline = new THREE.LineSegments(
+          this.tileOutlineGeo,
+          this.gridMat,
+        );
         outline.position.set(xPos, zPos, 0.005);
         outline.frustumCulled = false;
         tileGroup.add(outline);
@@ -192,21 +217,21 @@ class HallwayManager {
 
     // doors
     const door1 = new THREE.Mesh(this.doorGeo, this.doorMat);
-    door1.position.set(-HALLWAY_WIDTH/2 + 0.2, 3.5, -10);
+    door1.position.set(-HALLWAY_WIDTH / 2 + 0.2, 3.5, -10);
     door1.frustumCulled = false;
     group.add(door1);
 
     const door2 = new THREE.Mesh(this.doorGeo, this.doorMat);
-    door2.position.set(HALLWAY_WIDTH/2 - 0.2, 3.5, 10);
+    door2.position.set(HALLWAY_WIDTH / 2 - 0.2, 3.5, 10);
     door2.frustumCulled = false;
     group.add(door2);
 
     // beam
-    const isSignBeam = (index === 0);
-    const zBeam = 18; 
+    const isSignBeam = index === 0;
+    const zBeam = 18;
 
     // main beam
-    // the first segment will have the boelter sign beam, the rest are red 
+    // the first segment will have the boelter sign beam, the rest are red
     const beamMat = isSignBeam ? this.matBeamDark : this.matBeamRed;
     const beamMesh = new THREE.Mesh(this.beamGeo, beamMat);
     beamMesh.position.set(0, 9.25, zBeam);
@@ -215,26 +240,25 @@ class HallwayManager {
 
     // sign
     if (isSignBeam) {
-        const signMesh = new THREE.Mesh(this.signPlaneGeo, this.matSignFace);
-        signMesh.position.set(0, 9.25, zBeam + 1.01); 
-        signMesh.frustumCulled = false;
-        group.add(signMesh);
+      const signMesh = new THREE.Mesh(this.signPlaneGeo, this.matSignFace);
+      signMesh.position.set(0, 9.25, zBeam + 1.01);
+      signMesh.frustumCulled = false;
+      group.add(signMesh);
     }
 
     const legLeft = new THREE.Mesh(this.beamLegGeo, beamMat);
-    legLeft.position.set(-(HALLWAY_WIDTH/2) + 0.6, 5, zBeam);
+    legLeft.position.set(-(HALLWAY_WIDTH / 2) + 0.6, 5, zBeam);
     legLeft.frustumCulled = false;
     group.add(legLeft);
 
     const legRight = new THREE.Mesh(this.beamLegGeo, beamMat);
-    legRight.position.set((HALLWAY_WIDTH/2) - 0.6, 5, zBeam);
+    legRight.position.set(HALLWAY_WIDTH / 2 - 0.6, 5, zBeam);
     legRight.frustumCulled = false;
     group.add(legRight);
 
     const spawnGroup = new THREE.Group();
     spawnGroup.name = "SpawnGroup";
     group.add(spawnGroup);
-
 
     if (!skipsawns) {
       populateObstacles(spawnGroup, SEGMENT_LENGTH, HALLWAY_WIDTH);
@@ -243,8 +267,6 @@ class HallwayManager {
     return group;
   }
 }
-
-
 
 export function createHallway(scene, levelConfig) {
   return new HallwayManager(scene, levelConfig);
