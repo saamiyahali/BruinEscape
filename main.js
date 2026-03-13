@@ -23,6 +23,7 @@ scene.add(player);
 //levels
 let currentLevelIndex = 0;
 let currentLevel = LEVELS[currentLevelIndex];
+let infiniteLivesMode = false;
 
 
 initObstacleModels();
@@ -143,6 +144,10 @@ function updateGameOverScore() {
 }
 
 function updateHearts() {
+    if (infiniteLivesMode) {
+        heartsUI.innerText = '♾️';
+        return;
+    }
     heartsUI.innerText = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
 }
 
@@ -321,6 +326,11 @@ function animate() {
 
     const dt = clock.getDelta();
 
+    if (input.infiniteToggle()) {
+        infiniteLivesMode = !infiniteLivesMode;
+        updateHearts();
+    }
+
     if (input.pause()) {
         if (gameState === GAME_STATES.PLAYING) {
             showPauseScreen();
@@ -451,17 +461,18 @@ function animate() {
                     obstacleBox.expandByScalar(-0.1);
 
                     if (playerBox.intersectsBox(obstacleBox)) {
-                        lives--;
-                        updateHearts();
                         gotHit = true;
+                        
+                        if (!infiniteLivesMode) {
+                            lives--;
+                            updateHearts();
+                        }
+                        isInvincible = true;
+                        blinkTimer = BLINK_DURATION;
+                        blinkAccumulator = 0;
+                        velY = 0.0;
 
-                        if (lives > 0) {
-                            isInvincible = true;
-                            blinkTimer = BLINK_DURATION;
-                            blinkAccumulator = 0;
-                            velY = 0.0;
-                            
-                        } else {
+                        if (!infiniteLivesMode && lives <= 0) {
                             isGameOver = true;
                             showGameOverScreen();
                         }

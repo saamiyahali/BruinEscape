@@ -9,7 +9,8 @@ const TEXTURES = {
   pit: null,
   coin: null,
   alien: null,
-  slenderman: null
+  slenderman: null,
+  fish: null
 };
 
 const COIN_HEIGHTS = [1.5, 3.5, 4.5]
@@ -25,6 +26,7 @@ export function initObstacleModels() {
   TEXTURES.coin = loader.load('/assets/textures/coin.png');
   TEXTURES.alien = loader.load('/assets/textures/alien1.png');
   TEXTURES.slenderman = loader.load('/assets/textures/slenderman.png');
+  TEXTURES.fish = loader.load('/assets/textures/fish.png');
   
   Object.values(TEXTURES).forEach(tex => {
     if (tex) {
@@ -67,7 +69,7 @@ const OBSTACLE_TYPES = {
   },
   pit: {
     textureKey: "pit",
-    width: 6.0,
+    width: 4.5,
     height: 5.0,
     depth: 5.0,
     y: 0.2,
@@ -111,6 +113,16 @@ const OBSTACLE_TYPES = {
     height: 7.0,
     depth: 2.5,
     y: 3.5,
+    kind: "sprite",
+    blocksCoins: true,
+    blocksObstacles: true
+  },
+  fish: {
+    textureKey: "fish",
+    width: 3.0,
+    height: 2.0,
+    depth: 2.0,
+    y: 2.0,
     kind: "sprite",
     blocksCoins: true,
     blocksObstacles: true
@@ -249,7 +261,12 @@ function createObstacleMesh(type, def, spawn) {
 
     mesh = new THREE.Sprite(material);
     mesh.scale.set(def.width, def.height, 1);
-    mesh.position.set(spawn.x, def.y, spawn.z);
+    let y = def.y;
+    if (type === "alien") {
+      y = THREE.MathUtils.randFloat(3.5, 4.5);
+    }
+
+    mesh.position.set(spawn.x, y, spawn.z);
 
     mesh.userData.isPit = false;
   }
@@ -322,7 +339,7 @@ export function populateObstacles(segmentGroup, segmentLength, hallwayWidth, lev
 
   if (!levelConfig) {
     levelConfig = {
-      obstacleTypes: ["robot", "trash", "sign", "pit", "student", "alien"],
+      obstacleTypes: ["robot", "trash", "sign", "pit", "student", "alien", "fish"],
       obstacleMin: 1,
       obstacleMax: 3,
       coinMin: 1,

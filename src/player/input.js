@@ -1,7 +1,7 @@
 export class Input {
     constructor() {
         this.keys = Object.create(null);
-
+        this.infinitePressed = false;
         this.jumpPressed = false;
         this.pausePressed = false;
         this.resetPressed = false;
@@ -15,6 +15,9 @@ export class Input {
             }
             if (!this.keys[e.key] && this.isResetKey(e.key)) {
                 this.resetPressed = true;
+            }
+            if (!this.keys[e.key] && (e.key === "i" || e.key === "I")) {
+                this.infinitePressed = true;
             }
             this.keys[e.key] = true;
         });
@@ -59,9 +62,14 @@ export class Input {
         return this.resetPressed;
     }
 
+    infiniteToggle() {
+        return this.infinitePressed;
+    }
+
     endFrame() {
         this.jumpPressed = false;
         this.pausePressed = false;
         this.resetPressed = false;
+        this.infinitePressed = false;
     }
 }
