@@ -30,6 +30,7 @@ const GAME_STATES = {
     START: "start",
     LEVEL_SELECT: "level_select",
     PLAYING: "playing",
+    PAUSED: "paused",
     GAME_OVER: "game_over",
     VICTORY: "victory"
 };
@@ -39,7 +40,9 @@ let unlockedLevel = Number(localStorage.getItem("unlockedLevel") || 1);
 
 const startScreenUI = document.getElementById('start-screen');
 const levelSelectScreenUI = document.getElementById('level-select-screen');
+const pauseScreenUI = document.getElementById('pause-screen');
 const victoryScreenUI = document.getElementById('victory-screen');
+const gameOverUI = document.getElementById('game-over');
 const levelButtonsUI = document.getElementById('level-buttons');
 
 const startButton = document.getElementById('start-button');
@@ -49,37 +52,54 @@ const retryButton = document.getElementById('retry-button');
 const gameOverLevelSelectButton = document.getElementById('game-over-level-select-button');
 const victoryLevelSelectButton = document.getElementById('victory-level-select-button');
 
+const resumeButton = document.getElementById('resume-button');
+const pauseResetButton = document.getElementById('pause-reset-button');
+const pauseLevelSelectButton = document.getElementById('pause-level-select-button');
+const pauseMainMenuButton = document.getElementById('pause-main-menu-button');
+
 function hideAllMenus() {
-    startScreenUI.style.display = 'none';
-    levelSelectScreenUI.style.display = 'none';
-    gameOverUI.style.display = 'none';
-    victoryScreenUI.style.display = 'none';
+    startScreenUI.classList.remove('show');
+    levelSelectScreenUI.classList.remove('show');
+    pauseScreenUI.classList.remove('show');
+    gameOverUI.classList.remove('show');
+    victoryScreenUI.classList.remove('show');
 }
 
 function showStartScreen() {
     gameState = GAME_STATES.START;
     hideAllMenus();
-    startScreenUI.style.display = 'block';
+    startScreenUI.classList.add('show');
 }
 
 function showLevelSelectScreen() {
     gameState = GAME_STATES.LEVEL_SELECT;
     hideAllMenus();
     renderLevelButtons();
-    levelSelectScreenUI.style.display = 'block';
+    levelSelectScreenUI.classList.add('show');
+}
+
+function showPauseScreen() {
+    gameState = GAME_STATES.PAUSED;
+    hideAllMenus();
+    pauseScreenUI.classList.add('show');
 }
 
 function showGameOverScreen() {
     gameState = GAME_STATES.GAME_OVER;
     updateGameOverScore();
     hideAllMenus();
-    gameOverUI.style.display = 'block';
+    gameOverUI.classList.add('show');
 }
 
 function showVictoryScreen() {
     gameState = GAME_STATES.VICTORY;
     hideAllMenus();
-    victoryScreenUI.style.display = 'block';
+    victoryScreenUI.classList.add('show');
+}
+
+function resumeGame() {
+    hideAllMenus();
+    gameState = GAME_STATES.PLAYING;
 }
 
 // Placeholder input, add input.js here
@@ -111,10 +131,8 @@ let blinkAccumulator = 0;
 
 //UI
 const heartsUI = document.getElementById('hearts');
-const gameOverUI = document.getElementById('game-over');
 const scoreUI = document.getElementById('score');
 const finalScoreUI = document.getElementById('final-score');
-
 
 // Hallway
 const hallway = createHallway(scene, currentLevel);
@@ -130,6 +148,8 @@ function updateGameOverScore() {
 function updateHearts() {
     heartsUI.innerText = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
 }
+
+
 
 function renderLevelButtons() {
     levelButtonsUI.innerHTML = "";
@@ -170,6 +190,23 @@ retryButton.addEventListener("click", () => {
     gameState = GAME_STATES.PLAYING;
 });
 
+resumeButton.addEventListener("click", () => {
+    resumeGame();
+});
+
+pauseResetButton.addEventListener("click", () => {
+    resetGame();
+    resumeGame();
+});
+
+pauseLevelSelectButton.addEventListener("click", () => {
+    showLevelSelectScreen();
+});
+
+pauseMainMenuButton.addEventListener("click", () => {
+    showStartScreen();
+});
+
 gameOverLevelSelectButton.addEventListener("click", showLevelSelectScreen);
 victoryLevelSelectButton.addEventListener("click", showLevelSelectScreen);
 
@@ -180,14 +217,18 @@ function resetGame() {
     
     isGameOver = false;
     isInvincible = false;
-    gameOverUI.style.display = 'none';
+    blinkTimer = 0;
+    blinkAccumulator = 0;
+    player.material.opacity = 1;
 
     updateScore();
     updateHearts();
+    updateGameOverScore();
 
     player.position.set(0, GROUND_Y, 0);
     velY = 0.0;
 
+    hallway.setLevelConfig(currentLevel);
     hallway.resetSegments();
 }
 
@@ -215,28 +256,50 @@ const clock = new THREE.Clock();
 
 function animate() {
 
+    const dt = clock.getDelta();
+
+    if (input.pause()) {
+        if (gameState === GAME_STATES.PLAYING) {
+            showPauseScreen();
+        } else if (gameState === GAME_STATES.PAUSED) {
+            resumeGame();
+        }
+
+    }
     if (gameState !== GAME_STATES.PLAYING) {
+        input.endFrame();
         renderer.render(scene, camera);
         return;
     }
 
+    if (input.reset()) {
+        resetGame();
+        input.endFrame();
+        renderer.render(scene, camera);
+    return;
+    }
+
 	if (isGameOver) {
-        if (input.jump()) resetGame(); 
+        input.endFrame();
+        renderer.render(scene, camera);
         return; 
     }
-	const dt = clock.getDelta();
+
 	if (currentSpeed < MAX_SPEED) {
         currentSpeed += SPEED_INCREMENT * dt;
     }
     hallway.speed = currentSpeed;
+
 	
 	//Jump
 	if(input.jump() && player.position.y <= GROUND_Y + 1e-4) {
 		velY = JUMP_VEL;
 	}
 
+    const fastFallMultiplier = input.slide() && player.position.y > GROUND_Y + 1e-4 ? 5 : 1.0;
+
     //Gravity
-	velY -= GRAVITY * dt;
+	velY -= GRAVITY * fastFallMultiplier *dt;
 	player.position.y += velY * dt;
 
 	// Ground collision

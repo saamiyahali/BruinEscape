@@ -3,20 +3,36 @@ export class Input {
         this.keys = Object.create(null);
 
         this.jumpPressed = false;
+        this.pausePressed = false;
+        this.resetPressed = false;
 
         window.addEventListener("keydown", (e) => {
             if (!this.keys[e.key] && this.isJumpKey(e.key)) {
                 this.jumpPressed = true;
             }
+            if (!this.keys[e.key] && this.isPauseKey(e.key)) {
+                this.pausePressed = true;
+            }
+            if (!this.keys[e.key] && this.isResetKey(e.key)) {
+                this.resetPressed = true;
+            }
             this.keys[e.key] = true;
         });
         window.addEventListener("keyup", (e) => {
             this.keys[e.key] = false;
-        })
+        });
     }
 
     isJumpKey(k) {
         return k === " " || k === "w" || k === "W" || k === "ArrowUp";
+    }
+
+    isPauseKey(k) {
+        return k === "p" || k === "P" || k === "Escape";
+    }
+
+    isResetKey(k) {
+        return k === "r" || k === "R";
     }
 
     left() {
@@ -35,7 +51,17 @@ export class Input {
         return !!(this.keys["s"] || this.keys["S"] || this.keys["ArrowDown"]);
     }
 
+    pause() {
+        return this.pausePressed;
+    }
+
+    reset() {
+        return this.resetPressed;
+    }
+
     endFrame() {
         this.jumpPressed = false;
+        this.pausePressed = false;
+        this.resetPressed = false;
     }
 }

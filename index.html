@@ -4,52 +4,174 @@
     <meta charset="utf-8">
     <title>Bruin Escape</title>
     <style>
+        :root {
+            --ucla-blue: #2774ae;
+            --ucla-dark-blue: #1b4f72;
+            --ucla-gold: #ffd100;
+            --panel-bg: rgba(10, 18, 34, 0.88);
+            --panel-border: rgba(255, 209, 0, 0.4);
+            --text-main: #ffffff;
+            --text-soft: #d9e6f2;
+            --danger: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #000;
+        }
+
+        canvas {
+            display: block;
         }
 
         #ui-container {
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 100;
+            z-index: 50;
             color: #ff3366;
             font-size: 32px;
             font-family: 'Courier New', Courier, monospace;
             text-shadow: 2px 2px 4px #000;
+            user-select: none;
         }
 
         #score {
             margin-top: 8px;
-            color: #ffd700;
+            color: var(--ucla-gold);
             font-size: 24px;
         }
 
-        #game-over {
-            display: none;
+        .overlay-screen {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(rgba(20, 32, 60, 0.72), rgba(8, 14, 28, 0.86));
             z-index: 200;
-            color: #ff0000;
-            font-size: 80px;
+            color: var(--text-main);
             text-align: center;
-            text-shadow: 2px 2px 6px black;
+        }
+
+        .overlay-screen.show {
+            display: flex;
+        }
+
+        .menu-panel {
+            min-width: 320px;
+            max-width: 520px;
+            padding: 32px 28px;
+            border-radius: 20px;
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .menu-title {
+            margin: 0 0 12px 0;
+            font-size: 52px;
+            letter-spacing: 1px;
+            color: var(--ucla-gold);
+            text-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        }
+
+        .menu-subtitle {
+            margin: 0 0 24px 0;
+            font-size: 18px;
+            color: var(--text-soft);
+            line-height: 1.45;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .menu-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            appearance: none;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 22px;
+            min-width: 160px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            color: #0d1b2a;
+            background: linear-gradient(180deg, #ffe680 0%, var(--ucla-gold) 100%);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.28);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 18px rgba(0,0,0,0.35);
+            filter: brightness(1.02);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+            filter: grayscale(0.3);
+        }
+
+        .secondary-button {
+            background: linear-gradient(180deg, #d7e8f8 0%, #a9cce8 100%);
+        }
+
+        .danger-button {
+            background: linear-gradient(180deg, #ffb3b3 0%, #ff6b6b 100%);
+            color: white;
+        }
+
+        #game-over-text {
+            color: var(--danger);
+            font-size: 74px;
+            font-weight: 900;
+            text-shadow: 2px 2px 8px black;
             animation: blink-animation 0.8s steps(2, start) infinite;
         }
 
         #final-score {
-            margin-top: 12px;
+            margin-top: 14px;
             font-size: 28px;
-            color: #ffd700;
+            color: var(--ucla-gold);
         }
 
-        #restart-text {
-            margin-top: 12px;
-            font-size: 20px;
-            color: white;
+        #victory-text,
+        #pause-text,
+        #controls-text {
+            font-size: 18px;
+            color: var(--text-soft);
+            line-height: 1.5;
+        }
+
+        #level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
         }
 
         @keyframes blink-animation {
@@ -65,29 +187,65 @@
         <div id="score">Coins: 0</div>
     </div>
 
-    <div id="game-over">
-        <div>GAME OVER</div>
-        <div id="final-score">Final Score: 0</div>
-        <button id="retry-button">Retry</button>
-        <button id="game-over-level-select-button">Level Select</button>
+    <div id="start-screen" class="overlay-screen show">
+        <div class="menu-panel">
+            <h1 class="menu-title">Bruin Escape</h1>
+            <p id="controls-text" class="menu-subtitle">
+                Move: A / D or Arrow Keys<br>
+                Jump: W / Space / Up<br>
+                Fast Fall: S / Down<br>
+                Pause: P or Escape<br>
+                Reset Level: R
+            </p>
+            <div class="menu-buttons">
+                <button id="start-button">Start Game</button>
+                <button id="level-select-button" class="secondary-button">Level Select</button>
+            </div>
+        </div>
     </div>
 
-    <div id="start-screen">
-        <h1>Bruin Escape</h1>
-        <button id="start-button">Start Game</button>
-        <button id="level-select-button">Level Select</button>
+    <div id="level-select-screen" class="overlay-screen">
+        <div class="menu-panel">
+            <h2 class="menu-title">Select Level</h2>
+            <div id="level-buttons"></div>
+            <div class="menu-row">
+                <button id="back-to-start-button" class="secondary-button">Back</button>
+            </div>
+        </div>
     </div>
 
-    <div id="level-select-screen" style="display:none;">
-        <h2>Select Level</h2>
-        <div id="level-buttons"></div>
-        <button id="back-to-start-button">Back</button>
+    <div id="pause-screen" class="overlay-screen">
+        <div class="menu-panel">
+            <h2 class="menu-title">Paused</h2>
+            <p id="pause-text">Choose an option</p>
+            <div class="menu-buttons">
+                <button id="resume-button">Resume</button>
+                <button id="pause-reset-button" class="secondary-button">Reset Level</button>
+                <button id="pause-level-select-button" class="secondary-button">Levels</button>
+                <button id="pause-main-menu-button" class="danger-button">Main Menu</button>
+            </div>
+        </div>
     </div>
 
-    <div id="victory-screen" style="display:none;">
-        <h1>You Win!</h1>
-        <p id="victory-text"></p>
-        <button id="victory-level-select-button">Level Select</button>
+    <div id="game-over" class="overlay-screen">
+        <div class="menu-panel">
+            <div id="game-over-text">GAME OVER</div>
+            <div id="final-score">Final Score: 0</div>
+            <div class="menu-buttons">
+                <button id="retry-button">Retry</button>
+                <button id="game-over-level-select-button" class="secondary-button">Level Select</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="victory-screen" class="overlay-screen">
+        <div class="menu-panel">
+            <h1 class="menu-title">You Win!</h1>
+            <p id="victory-text">Nice run.</p>
+            <div class="menu-buttons">
+                <button id="victory-level-select-button">Level Select</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/main.js"></script>
