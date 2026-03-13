@@ -24,13 +24,18 @@ scene.add(player);
 let currentLevelIndex = 0;
 let currentLevel = LEVELS[currentLevelIndex];
 
+
 initObstacleModels();
+
+//screen ui
 
 const GAME_STATES = {
     START: "start",
     LEVEL_SELECT: "level_select",
+    LEVEL_BRIEFING: "level_briefing",
     PLAYING: "playing",
     PAUSED: "paused",
+    LEVEL_COMPLETED: "level_completed",
     GAME_OVER: "game_over",
     VICTORY: "victory"
 };
@@ -57,12 +62,31 @@ const pauseResetButton = document.getElementById('pause-reset-button');
 const pauseLevelSelectButton = document.getElementById('pause-level-select-button');
 const pauseMainMenuButton = document.getElementById('pause-main-menu-button');
 
+const levelBriefingScreenUI = document.getElementById('level-briefing-screen');
+const briefingTitleUI = document.getElementById('briefing-title');
+const briefingGoalUI = document.getElementById('briefing-goal');
+const briefingObstaclesUI = document.getElementById('briefing-obstacles');
+const briefingStartButton = document.getElementById('briefing-start-button');
+const briefingBackButton = document.getElementById('briefing-back-button');
+
+const levelCompleteScreenUI = document.getElementById('level-complete-screen');
+const levelCompleteTextUI = document.getElementById('level-complete-text');
+const nextLevelButton = document.getElementById('next-level-button');
+const levelCompleteLevelSelectButton = document.getElementById('level-complete-level-select-button');
+
+//game Overlay UI
+const heartsUI = document.getElementById('hearts');
+const scoreUI = document.getElementById('score');
+const finalScoreUI = document.getElementById('final-score');
+
 function hideAllMenus() {
     startScreenUI.classList.remove('show');
     levelSelectScreenUI.classList.remove('show');
     pauseScreenUI.classList.remove('show');
     gameOverUI.classList.remove('show');
     victoryScreenUI.classList.remove('show');
+    levelCompleteScreenUI.classList.remove('show');
+    levelBriefingScreenUI.classList.remove('show');
 }
 
 function showStartScreen() {
@@ -102,40 +126,13 @@ function resumeGame() {
     gameState = GAME_STATES.PLAYING;
 }
 
-// Placeholder input, add input.js here
-const input = new Input();
+function showLevelCompleteScreen() {
+    gameState = GAME_STATES.LEVEL_COMPLETE;
+    hideAllMenus();
 
-// Gravity
-const GRAVITY = 25.0;
-const JUMP_VEL = 14.0;
-const GROUND_Y = 1.0;
-
-let velY = 0.0;
-
-// Player movement constants
-const MOVE_SPEED = 8.0;
-
-//Lives and game state
-let lives = 5;
-let isInvincible = false;
-let isGameOver = false;
-let currentSpeed = 15.0; 
-const SPEED_INCREMENT = 0.2; 
-const MAX_SPEED = 30.0;
-
-//Blinking
-let blinkTimer = 0;
-const BLINK_DURATION = 2.0;
-const BLINK_INTERVAL = 0.1;
-let blinkAccumulator = 0;
-
-//UI
-const heartsUI = document.getElementById('hearts');
-const scoreUI = document.getElementById('score');
-const finalScoreUI = document.getElementById('final-score');
-
-// Hallway
-const hallway = createHallway(scene, currentLevel);
+    levelCompleteTextUI.innerText = `Level ${currentLevel.id} complete!`;
+    levelCompleteScreenUI.classList.add('show');
+}
 
 function updateScore() {
     scoreUI.innerText = "Coins: " + score;
@@ -149,14 +146,35 @@ function updateHearts() {
     heartsUI.innerText = '❤️'.repeat(lives) + '🖤'.repeat(5 - lives);
 }
 
+function getObstacleNamesForLevel(level) {
+    if (!level.obstacleTypes || level.obstacleTypes.length === 0) {
+        return ["None"];
+    }
+    return level.obstacleTypes;
+}
 
+function showLevelBriefingScreen() {
+    gameState = GAME_STATES.LEVEL_BRIEFING;
+    hideAllMenus();
+
+    briefingTitleUI.innerText = `Floor ${currentLevel.id}`;
+    briefingGoalUI.innerText = `Collect ${currentLevel.goalCoins} coins`;
+
+    const obstacleNames = getObstacleNamesForLevel(currentLevel);
+    briefingObstaclesUI.innerHTML = `
+        <strong>Obstacles in this floor:</strong><br>
+        ${obstacleNames.map(name => `• ${name}`).join('<br>')}
+    `;
+
+    levelBriefingScreenUI.classList.add('show');
+}
 
 function renderLevelButtons() {
     levelButtonsUI.innerHTML = "";
 
     LEVELS.forEach((level, index) => {
         const button = document.createElement("button");
-        button.textContent = `Level ${level.id}`;
+        button.textContent = `Floor ${level.id}`;
         button.disabled = level.id > unlockedLevel;
 
         button.addEventListener("click", () => {
@@ -164,8 +182,7 @@ function renderLevelButtons() {
             currentLevel = LEVELS[currentLevelIndex];
             hallway.setLevelConfig(currentLevel);
             resetGame();
-            hideAllMenus();
-            gameState = GAME_STATES.PLAYING;
+            showLevelBriefingScreen();
         });
 
         levelButtonsUI.appendChild(button);
@@ -177,8 +194,16 @@ startButton.addEventListener("click", () => {
     currentLevel = LEVELS[currentLevelIndex];
     hallway.setLevelConfig(currentLevel);
     resetGame();
+    showLevelBriefingScreen();
+});
+
+briefingStartButton.addEventListener("click", () => {
     hideAllMenus();
     gameState = GAME_STATES.PLAYING;
+});
+
+briefingBackButton.addEventListener("click", () => {
+    showLevelSelectScreen();
 });
 
 levelSelectButton.addEventListener("click", showLevelSelectScreen);
@@ -210,6 +235,48 @@ pauseMainMenuButton.addEventListener("click", () => {
 gameOverLevelSelectButton.addEventListener("click", showLevelSelectScreen);
 victoryLevelSelectButton.addEventListener("click", showLevelSelectScreen);
 
+nextLevelButton.addEventListener("click", () => {
+    currentLevelIndex++;
+    currentLevel = LEVELS[currentLevelIndex];
+    hallway.setLevelConfig(currentLevel);
+    resetGame();
+    showLevelBriefingScreen();
+});
+
+levelCompleteLevelSelectButton.addEventListener("click", () => {
+    showLevelSelectScreen();
+});
+
+// Placeholder input, add input.js here
+const input = new Input();
+
+// Gravity
+const GRAVITY = 25.0;
+const JUMP_VEL = 14.0;
+const GROUND_Y = 1.0;
+
+let velY = 0.0;
+
+// Player movement constants
+const MOVE_SPEED = 8.0;
+
+//Lives and game state
+let lives = 5;
+let isInvincible = false;
+let isGameOver = false;
+let currentSpeed = 15.0; 
+const SPEED_INCREMENT = 0.2; 
+const MAX_SPEED = 30.0;
+
+//Blinking (for damage invincibility)
+let blinkTimer = 0;
+const BLINK_DURATION = 2.0;
+const BLINK_INTERVAL = 0.1;
+let blinkAccumulator = 0;
+
+// Hallway
+const hallway = createHallway(scene, currentLevel);
+
 function resetGame() {
     lives = 5;
     currentSpeed = currentLevel.speed;
@@ -239,16 +306,12 @@ function levelComplete() {
         localStorage.setItem("unlockedLevel", String(unlockedLevel));
     }
 
-    currentLevelIndex++;
-
-    if (currentLevelIndex >= LEVELS.length) {
+    if (currentLevelIndex >= LEVELS.length - 1) {
         showVictoryScreen();
         return;
     }
 
-    currentLevel = LEVELS[currentLevelIndex];
-    hallway.setLevelConfig(currentLevel);
-    resetGame();
+    showLevelCompleteScreen();
 }
 
 // Game loop

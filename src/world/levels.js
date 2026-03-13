@@ -2,7 +2,7 @@ export const LEVELS = [
     {
         id: 1,
         goalCoins: 15,
-        speed: 15,
+        speed: 20,
         obstacleTypes: ["sign"],
         obstacleMin: 1,
         obstacleMax: 2,
@@ -12,7 +12,7 @@ export const LEVELS = [
     {
         id: 2,
         goalCoins: 15,
-        speed: 17,
+        speed: 20,
         obstacleTypes: ["sign", "trash"],
         obstacleMin: 1,
         obstacleMax: 3,
@@ -22,7 +22,7 @@ export const LEVELS = [
     {
         id: 3,
         goalCoins: 15,
-        speed: 18,
+        speed: 25,
         obstacleTypes: ["sign", "trash", "student"],
         obstacleMin: 2,
         obstacleMax: 3,
@@ -32,7 +32,7 @@ export const LEVELS = [
     {
         id: 4,
         goalCoins: 15,
-        speed: 19,
+        speed: 25,
         obstacleTypes: ["sign", "trash", "student", "pit"],
         obstacleMin: 2,
         obstacleMax: 3,
@@ -42,7 +42,7 @@ export const LEVELS = [
         {
         id: 5,
         goalCoins: 20,
-        speed: 20,
+        speed: 30,
         obstacleTypes: ["sign", "trash", "student", "pit", "robot"],
         obstacleMin: 3,
         obstacleMax: 4,
